@@ -1,3 +1,6 @@
+#파이썬 impacket 설치 오류 -> 보안문제인듯
+#파이썬 다운 시켜도 안 됨 3.9
+
 import nmb.NetBIOS as NetBIOS
 
 # NetBIOS 세션을 만듭니다.
