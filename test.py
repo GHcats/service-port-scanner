@@ -1,22 +1,39 @@
-import imaplib
+from pysnmp.hlapi import *
 
-# IMAP 서버 정보
-imap_server = "outlook.office365.com"  # IMAP 서버 주소
-imap_port = 143  # 포트 번호 (143은 기본값)
+def SNMP_conn(target, port):
 
-# 계정 정보
-username = "cytmdgml@gmail.com"
-password = "WODQKSEKF*"
+    # SNMP 커뮤니티 문자열 (공동체 문자열) 설정
+    community = 'public'  # 공동체 문자열 (일반적으로 'public' 사용)
 
-# IMAP 서버에 연결
-imap_connection = imaplib.IMAP4(imap_server, imap_port)
+    # OID (Object Identifier) 설정 (예: 시스템 이름 가져오기)
+    oid = ObjectIdentity('SNMPv2-MIB', 'sysName', 0)
 
-# IMAP 서버에 로그인
-imap_connection.login(username, password)
+    # SNMP 요청 생성
+    snmp_request = getCmd(
+        SnmpEngine(),
+        CommunityData(community),
+        UdpTransportTarget((target, port), timeout=60, retries=1),  # 타임아웃 및 재시도 횟수 설정
+        ContextData(),
+        ObjectType(oid)
+    )
 
-# 이제 IMAP 서버에 연결되었고 로그인되었습니다.
+    # SNMP 요청 전송 및 응답 받기
+    error_indication, error_status, error_index, var_binds = next(snmp_request)
 
-# 원하는 작업을 수행할 수 있습니다.
+    # 에러 확인
+    if error_indication:
+        print(f"에러: {error_indication}")
+    else:
+        if error_status:
+            print(f"에러 상태: {error_status}")
+        else:
+            for var_bind in var_binds:
+                print(f"연결 성공! {var_bind[0].prettyPrint()} = {var_bind[1].prettyPrint()}")
 
-# 연결 종료
-imap_connection.logout()
+
+if __name__=='__main__':    
+    # SNMP 에이전트 및 포트 설정
+    target = 'localhost'  # 에이전트의 주소
+    port = 161  # SNMP 포트 (기본값은 161)
+
+    SNMP_conn(target, port)

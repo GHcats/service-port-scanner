@@ -1,3 +1,5 @@
+#포트 여는 것부터 막힘
+
 import xmlrpc.client
 
 def check_rpc_connection(host, port):
