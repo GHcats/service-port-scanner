@@ -1,4 +1,5 @@
 #outlook 서비스가 993포트로 이용중이어서 안 되는 것 같음.
+#993이 됐으니까 되지 않을까..?
 #143 IMAP는 평문통신을 함
 
 from ignore import username, password, host
