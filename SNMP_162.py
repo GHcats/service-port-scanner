@@ -3,6 +3,8 @@
 
 # 무한 수신 대기중 수정하기
 
+#SNMP Manager
+
 from pysnmp.hlapi import *
 from pysnmp.carrier.asyncore.dispatch import AsyncoreDispatcher as TransportDispatcher
 from pysnmp.carrier.asyncore.dgram import udp

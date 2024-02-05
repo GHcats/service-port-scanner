@@ -1,6 +1,8 @@
+#SNMP Agent
+
 from pysnmp.hlapi import *
 
-def SNMP_conn(target, port):
+def SNMP_conn(host, port):
 
     # SNMP 커뮤니티 문자열 (공동체 문자열) 설정
     community = 'public'  # 공동체 문자열 (일반적으로 'public' 사용)
@@ -12,7 +14,7 @@ def SNMP_conn(target, port):
     snmp_request = getCmd(
         SnmpEngine(),
         CommunityData(community),
-        UdpTransportTarget((target, port), timeout=30, retries=1),  # 타임아웃 및 재시도 횟수 설정
+        UdpTransportTarget((host, port), timeout=30, retries=1),  # 타임아웃 및 재시도 횟수 설정
         ContextData(),
         ObjectType(oid)
     )
@@ -33,7 +35,7 @@ def SNMP_conn(target, port):
 
 if __name__=='__main__':    
     # SNMP 에이전트 및 포트 설정
-    target = ''  # 에이전트의 주소
+    host = ''  # 에이전트의 주소
     port = 161  # SNMP 포트 (기본값은 161)
 
-    SNMP_conn(target, port)
+    SNMP_conn(host, port)
