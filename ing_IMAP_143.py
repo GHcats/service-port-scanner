@@ -7,8 +7,8 @@ imap_server = "outlook.office365.com"  # IMAP 서버 주소
 imap_port = 143  # 포트 번호 (143은 기본값)
 
 # 계정 정보
-username = "cytmdgml@gmail.com"
-password = "WODQKSEKF*"
+username = ""
+password = ""
 
 # IMAP 서버에 연결
 imap_connection = imaplib.IMAP4(imap_server, imap_port)

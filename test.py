@@ -1,39 +1,61 @@
 from pysnmp.hlapi import *
 
-def SNMP_conn(target, port):
+def SNMP_TRAP_receiver(config, port):
 
-    # SNMP 커뮤니티 문자열 (공동체 문자열) 설정
-    community = 'public'  # 공동체 문자열 (일반적으로 'public' 사용)
+    # SNMP 엔진 설정
+    snmp_engine = SnmpEngine()
 
-    # OID (Object Identifier) 설정 (예: 시스템 이름 가져오기)
-    oid = ObjectIdentity('SNMPv2-MIB', 'sysName', 0)
-
-    # SNMP 요청 생성
-    snmp_request = getCmd(
-        SnmpEngine(),
-        CommunityData(community),
-        UdpTransportTarget((target, port), timeout=60, retries=1),  # 타임아웃 및 재시도 횟수 설정
-        ContextData(),
-        ObjectType(oid)
+    # SNMP TRAP 리스너 시작
+    #원래는 trap을 이용해야 하는데 recvNotification이 없음
+    # snmp_context = ContextData()
+    # snmp_trap_listener = next(
+    #     recvNotification(  # 이 부분을 recvNotification 함수로 변경
+    #         snmp_engine,
+    #         CommunityData('public'),  # 커뮤니티 문자열 설정 (실제 환경에서 보안을 고려해야 합니다)
+    #         config,
+    #         snmp_context
+    #     )
+    # )
+    
+    print(f"SNMP TRAP 수신 대기 중 (Port {port})...")
+    
+    # SNMP TRAP을 수신하고 처리하는 루프
+    for (error_indication, error_status, error_index, var_binds) in next(
+        getCmd(
+            snmp_engine,
+            CommunityData('public'),  # 커뮤니티 문자열 설정 (실제 환경에서 보안을 고려해야 합니다)
+            config,
+            ContextData(),
+            ObjectType(ObjectIdentity('SNMPv2-MIB', 'sysDescr', 0)),
+        )
     )
+        # if error_indication:
+        #     print(f"에러: {error_indication}")
+        # else:
+        #     if error_status:
+        #         print(f"에러 상태: {error_status}")
+        #     else:
+        #         for var_bind in var_binds:
+        #             print(f"SNMP TRAP 수신: {var_bind[0].prettyPrint()} = {var_bind[1].prettyPrint()}")
+    while True:
+        try:
+            for (error_indication, error_status, error_index, var_binds) in next(...):
+                # SNMP 트랩을 처리하는 기존의 코드
+                pass
+        except RequestTimedOut:
+            # 타임아웃을 처리합니다. 에러 로깅이나 요청 재시도 등
+            print("SNMP 요청이 타임아웃 되었습니다.")
+        except StopIteration:
+            # 이터레이터의 끝을 처리, 해당되는 경우
+            break
 
-    # SNMP 요청 전송 및 응답 받기
-    error_indication, error_status, error_index, var_binds = next(snmp_request)
+        
+if __name__ == '__main__':
+    # SNMP 포트 (기본값은 162)
+    port = 162
 
-    # 에러 확인
-    if error_indication:
-        print(f"에러: {error_indication}")
-    else:
-        if error_status:
-            print(f"에러 상태: {error_status}")
-        else:
-            for var_bind in var_binds:
-                print(f"연결 성공! {var_bind[0].prettyPrint()} = {var_bind[1].prettyPrint()}")
-
-
-if __name__=='__main__':    
-    # SNMP 에이전트 및 포트 설정
-    target = 'localhost'  # 에이전트의 주소
-    port = 161  # SNMP 포트 (기본값은 161)
-
-    SNMP_conn(target, port)
+    # SNMP TRAP 수신을 위한 SNMP 포트 설정
+    config = UdpTransportTarget(('192.168.0.35', port))
+    
+    SNMP_TRAP_receiver(config, port)
+   
