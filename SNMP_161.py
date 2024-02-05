@@ -1,5 +1,3 @@
-#에러 IF중첩문 깔끔하게 변경
-
 from pysnmp.hlapi import *
 
 def SNMP_conn(target, port):
@@ -25,12 +23,12 @@ def SNMP_conn(target, port):
     # 에러 확인
     if error_indication:
         print(f"에러: {error_indication}")
+    elif error_status:
+        print(f"에러 상태: {error_status}")
     else:
-        if error_status:
-            print(f"에러 상태: {error_status}")
-        else:
-            for var_bind in var_binds:
-                print(f"연결 성공! {var_bind[0].prettyPrint()} = {var_bind[1].prettyPrint()}")
+        for var_bind in var_binds:
+            print(f"연결 성공! {var_bind[0].prettyPrint()} = {var_bind[1].prettyPrint()}")
+
 
 
 if __name__=='__main__':    

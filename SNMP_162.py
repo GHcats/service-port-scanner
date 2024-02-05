@@ -2,7 +2,6 @@
 # 혹시나해서 None이라고 설정해주니까 됨. 연결확인만 하면 되는 거니까 괜찮지 않을까...
 
 # 무한 수신 대기중 수정하기
-# 최대한 함수 하나로 묶기
 
 from pysnmp.hlapi import *
 from pysnmp.carrier.asyncore.dispatch import AsyncoreDispatcher as TransportDispatcher

@@ -1,38 +1,44 @@
-from ignore import username, password, host
+#실제 메일 서버 주소 사용해서 테스트 outlook.office365.com
+#993 IMAPS는 IMAP과 크게 다른 것은 없고 암호화 통신을 함
 
-def imap_conn(server, port, username, password):
-    import imaplib
-        
+from ignore import username, password, host
+import imaplib
+
+def IMAPS_conn(host, port, username, password):
+    
     try:
         # IMAP 서버에 SSL 연결 설정
-        imap_server = imaplib.IMAP4_SSL(server, port)
+        imap_server = imaplib.IMAP4_SSL(host, port)
         
         # 사용자 로그인
         imap_server.login(username, password)
         
         # 연결 및 로그인 성공한 경우
-        print("Connected to IMAP server successfully.")
-        return imap_server
+        print("Connected to IMAP4 server successfully.")
+        return True
         
     except imaplib.IMAP4_SSL.error as ssl_error:
         print("SSL error:", ssl_error)
+        return None
         
     except imaplib.IMAP4.error as imap_error:
         print("IMAP error:", imap_error)
+        return None
         
     except Exception as e:
         print("An unexpected error occurred:", e)
+        return None
     
-    # 연결 또는 로그인 실패한 경우 None 반환
-    return None
 
 if __name__ == '__main__':
     host = "outlook.office365.com" #outlook.office365.com
     port = 993
+    username = username
+    password = password
 
     # IMAP 서버에 연결 및 로그인 시도
-    imap_connection = imap_conn(host, port, username, password)
+    imaps_connection = IMAPS_conn(host, port, username, password)
     
     #연결종료
-    imap_connection.logout()
+    imaps_connection.logout()
     
