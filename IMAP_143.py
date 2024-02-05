@@ -2,6 +2,8 @@
 #993이 됐으니까 되지 않을까..?
 #143 IMAP는 평문통신을 함
 
+# 배너그래빙 정보 출력하도록 수정하기
+
 from ignore import username, password, host
 import imaplib
 
