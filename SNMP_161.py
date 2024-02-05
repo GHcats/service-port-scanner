@@ -1,4 +1,5 @@
 #SNMP Agent
+# 배너정보 출력하도록 수정하기
 
 from pysnmp.hlapi import *
 
@@ -35,7 +36,7 @@ def SNMP_conn(host, port):
 
 if __name__=='__main__':    
     # SNMP 에이전트 및 포트 설정
-    host = ''  # 에이전트의 주소
+    host = '127.0.0.1'  # 에이전트의 주소
     port = 161  # SNMP 포트 (기본값은 161)
 
     SNMP_conn(host, port)

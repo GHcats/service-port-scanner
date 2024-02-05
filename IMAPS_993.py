@@ -1,6 +1,8 @@
 #실제 메일 서버 주소 사용해서 테스트 outlook.office365.com
 #993 IMAPS는 IMAP과 크게 다른 것은 없고 암호화 통신을 함
 
+# 배너정보 출력하도록 수정하기
+
 from ignore import username, password, host
 import imaplib
 
