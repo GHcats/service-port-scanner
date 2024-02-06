@@ -2,7 +2,7 @@ import imaplib
 import base64
 
 def IMAP_conn(host, port):
-    try:    
+    try:
         # IMAP 서버에 연결
         imap_server = imaplib.IMAP4(host, port)        
         
