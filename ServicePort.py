@@ -1,86 +1,36 @@
-#친절한 문구 추가하기
-
 import imaplib
-import email
+import base64
 from pysnmp.hlapi import *
 
-#메일 내용을 출력하도록 만들었는디
-def email_info(email_message):
-    email_subject = email_message["Subject"]
-    email_from = email_message["From"]
-    email_date = email_message["Date"]
-    email_to = email_message["To"]
-    email_mime_type = email_message.get_content_type()
-    email_priority = email_message["X-Priority"]  # 이메일 우선 순위
-    
-    email_body = ""
-    email_headers = ""
-
-    # 이메일 본문 추출
-    if email_mime_type == "text/plain":
-        email_body = email_message.get_payload()
-    elif email_mime_type == "text/html":
-        email_body = "HTML 이메일입니다."
-
-    # 이메일 헤더 정보 추출
-    for key, value in email_message.items():
-        email_headers += f"{key}: {value}\n"
-
-    return {
-        "제목": email_subject,
-        "발신자": email_from,
-        "발신일": email_date,
-        "수신자": email_to,
-        "이메일 본문": email_body,
-        "이메일 헤더": email_headers,
-        "형식": email_mime_type,
-        "우선 순위": email_priority
-    }
-    
 def IMAP_conn(host, port, use_ssl=False):
-    username = input('username: ')
-    password = input('password: ')
     
     try:
-        if use_ssl:
+        if use_ssl: #993 IMAPS
             imap_server = imaplib.IMAP4_SSL(host, port)
-        else:
+        else: #143 IMAP
             imap_server = imaplib.IMAP4(host, port)
-
-        imap_server.login(username, password)
         print(f"Connected to {'IMAPS' if use_ssl else 'IMAP'} server successfully.")
+        
+        # 배너정보 가져오기
+        banner_info = imap_server.welcome
 
-        status, mailbox_list = imap_server.list()
-        print("Available Mailboxes:")
-        for mailbox in mailbox_list:
-            print(mailbox.decode("utf-8"))
+        # Base64로 인코딩된 데이터 추출
+        # 먼저 바이트 문자열에서 문자열로 변환
+        banner_info_str = banner_info.decode('utf-8')
+        pure_banner_info = banner_info_str.split('[')[0]
+        encoded_data = banner_info_str.split('[')[1].split(']')[0]
+       
+        # Base64 디코딩
+        decoded_data = base64.b64decode(encoded_data)
+        print(f'banner_info: {pure_banner_info}')
+       
+        # 디코딩된 데이터를 문자열로 변환 (UTF-8 인코딩 사용)
+        try:
+            decoded_string = decoded_data.decode('utf-8')
+            print(f'생성서버: {decoded_string}')
+        except UnicodeDecodeError:
+            print("UTF-8 디코딩 실패")
 
-        mailbox = input("\nmailbox: ")
-        imap_server.select(mailbox)
-
-        status, email_ids = imap_server.search(None, 'ALL')
-        email_ids = email_ids[0].split()
-
-        if not email_ids:
-            print("이메일함이 비어있습니다.")
-            imap_server.logout()
-            return
-
-        for email_id in email_ids:
-            status, email_data = imap_server.fetch(email_id, '(RFC822)')
-            email_message = email.message_from_bytes(email_data[0][1])
-            email_info_dict = email_info(email_message)
-
-            print("Email Information: ")
-            for key, value in email_info_dict.items():
-                print(f"{key}: {value}")
-
-            print("\nEmail Body:")
-            print(email_info_dict["이메일 본문"])
-            print("-" * 30)
-
-        imap_server.logout()
-        return imap_server
 
     except imaplib.IMAP4_SSL.error as ssl_error:
         print("SSL error:", ssl_error)
@@ -104,14 +54,14 @@ def SNMP_conn(host):
     snmp_request = getCmd(
         SnmpEngine(),
         CommunityData(community),
-        UdpTransportTarget((host, port), timeout=30, retries=1),
+        UdpTransportTarget((host, port), timeout=10, retries=1),
         ContextData(),
         ObjectType(sysname_oid),
         ObjectType(sysdesc_oid)
     )
 
     error_indication, error_status, error_index, var_binds = next(snmp_request)
-
+    
     if error_indication:
         print(f"에러: {error_indication}")
     elif error_status:
@@ -128,9 +78,12 @@ if __name__ == '__main__':
 
     # IMAP 연결
     IMAP_conn(host, 143, use_ssl=False)
+    print('IMAP 스캔 완료')
 
     # IMAPS 연결 (SSL 사용)
     IMAP_conn(host, 993, use_ssl=True)
+    print('IMAPS 스캔 완료')
 
     # SNMP 연결
     SNMP_conn(host)
+    print('SNMP 스캔 완료')
