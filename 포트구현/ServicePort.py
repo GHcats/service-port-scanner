@@ -8,7 +8,6 @@ logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
 def IMAP_conn(host, port, use_ssl=False):   
-    
     try:
         if use_ssl: #993 IMAPS
             imap_server = imaplib.IMAP4_SSL(host, port)

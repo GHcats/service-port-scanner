@@ -12,7 +12,7 @@ port_result = {}
 
 #메인함수
 def main():
-    tgtHost = ""
+    tgtHost = "127.0.0.1"
 
     for portNum in range(1024):
         #도어락 설정
