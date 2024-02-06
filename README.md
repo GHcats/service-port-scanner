@@ -1,3 +1,3 @@
 # Goorm
 
-servieport.py가 메인 코드
+serviceport.py가 메인 코드
