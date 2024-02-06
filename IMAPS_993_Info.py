@@ -1,4 +1,3 @@
-from ignore import username, password
 import imaplib
 import ssl
 import base64
@@ -9,29 +8,11 @@ def IMAPS_conn(host, port):
         # IMAP 서버에 SSL 연결 설정
         imap_server = imaplib.IMAP4_SSL(host, port)
         
-        # 사용자 로그인
-        imap_server.login(username, password)
-
+        print("Connected to IMAP server successfully.")  
+        
         # 배너정보 가져오기
         banner_info = imap_server.welcome
         
-        print("Connected to IMAP server successfully.")   
-        #utf-16으로 디코딩 시도        
-        # try:
-        #     decoded_data = base64.b64decode(banner_info).decode('utf-16')
-        # except Exception as decode_error:
-        #     decoded_data = banner_info.decode('utf-8')
-        #     print('실패')
-        # print("Banner Information: ", banner_info.decode('utf-8'))
-        
-        #utf-16로 디코딩 시도2
-        # try:
-        #     decoded_data = base64.b64decode(banner_info).decode('utf-16')
-        #     print("Banner Information:", decoded_data)
-        # except Exception as decode_error:
-        #     print("Failed to decode banner information:", decode_error)
-        
-               
         # Base64로 인코딩된 데이터 추출
         # 먼저 바이트 문자열에서 문자열로 변환
         banner_info_str = banner_info.decode('utf-8')
