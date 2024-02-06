@@ -1,6 +1,7 @@
 #실제 메일 서버 주소 사용해서 테스트 outlook.office365.com
 
-#선택한 메일함 전부 출력하도록 만들어짐. 필요없는 정보는 없애기
+#IMAP 143
+#이메일 정보 출력하는 코드
 
 from ignore import username, password, host
 import imaplib
@@ -34,15 +35,6 @@ def email_info(email_message):
         "수신자": email_to,
         "이메일 본문": email_body,
         "이메일 헤더": email_headers,
-        "형식": email_mime_type,
-        "우선 순위": email_priority
-    }
-    return {
-        "제목": email_subject.decode(subject_charset or 'utf-8', errors='ignore'),
-        "발신자": email_from.decode(from_charset or 'utf-8', errors='ignore'),
-        "발신일": email_date,
-        "수신자": email_to,
-        "이메일 본문": email_body,
         "형식": email_mime_type,
         "우선 순위": email_priority
     }
@@ -100,10 +92,6 @@ def IMAP_conn(host, port, username, password):
             
         return imap_server
         
-    except imaplib.IMAP4_SSL.error as ssl_error:
-        print("SSL error:", ssl_error)
-        return None
-        
     except imaplib.IMAP4.error as imap_error:
         print("IMAP error:", imap_error)
         return None
@@ -115,7 +103,7 @@ def IMAP_conn(host, port, username, password):
 
 if __name__ == '__main__':
     host = "outlook.office365.com" #outlook.office365.com
-    port = 993
+    port = 143
     username = username
     password = password
 

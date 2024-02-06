@@ -6,8 +6,41 @@
 from ignore import username, password
 import imaplib
 import ssl
-import base64
+import email
 
+#메일 내용을 출력하도록 만들었는디
+def email_info(email_message):
+    email_subject = email_message["Subject"]
+    email_from = email_message["From"]
+    email_date = email_message["Date"]
+    email_to = email_message["To"]
+    email_mime_type = email_message.get_content_type()
+    email_priority = email_message["X-Priority"]  # 이메일 우선 순위
+    
+    email_body = ""
+    email_headers = ""
+
+    # 이메일 본문 추출
+    if email_mime_type == "text/plain":
+        email_body = email_message.get_payload()
+    elif email_mime_type == "text/html":
+        email_body = "HTML 이메일입니다."
+
+    # 이메일 헤더 정보 추출
+    for key, value in email_message.items():
+        email_headers += f"{key}: {value}\n"
+
+    return {
+        "제목": email_subject,
+        "발신자": email_from,
+        "발신일": email_date,
+        "수신자": email_to,
+        "이메일 본문": email_body,
+        "이메일 헤더": email_headers,
+        "형식": email_mime_type,
+        "우선 순위": email_priority
+    }
+    
 def IMAPS_conn(host, port):
     
     try:
@@ -16,21 +49,39 @@ def IMAPS_conn(host, port):
         
         # 사용자 로그인
         imap_server.login(username, password)
+        print(f"Connected to IMAPS server successfully.")
 
-        # 배너정보 가져오기
-        banner_info = imap_server.welcome
-        
-        # Base64 디코딩 및 출력 (ISO-8859-1 인코딩 사용)
-        #decoded_data = base64.b64decode(banner_info)
-        print("Connected to IMAP server successfully.")   
-        try:
-            decoded_data = base64.b64decode(banner_info).decode('utf-16')   
-            print(decoded_data)
-        except Exception as decode_error:
-            decoded_data = banner_info.decode('utf-8')
-            print('실패')
-#        print("Banner Information: ", banner_info.decode('utf-8'))
+        status, mailbox_list = imap_server.list()
+        print("Available Mailboxes:")
+        for mailbox in mailbox_list:
+            print(mailbox.decode("utf-8"))
 
+        mailbox = input("\nmailbox: ")
+        imap_server.select(mailbox)
+
+        status, email_ids = imap_server.search(None, 'ALL')
+        email_ids = email_ids[0].split()
+
+        if not email_ids:
+            print("이메일함이 비어있습니다.")
+            imap_server.logout()
+            return
+
+        for email_id in email_ids:
+            status, email_data = imap_server.fetch(email_id, '(RFC822)')
+            email_message = email.message_from_bytes(email_data[0][1])
+            email_info_dict = email_info(email_message)
+
+            print("Email Information: ")
+            for key, value in email_info_dict.items():
+                print(f"{key}: {value}")
+
+            print("\nEmail Body:")
+            print(email_info_dict["이메일 본문"])
+            print("-" * 30)
+
+        imap_server.logout()
+        return imap_server
     except imaplib.IMAP4_SSL.error as ssl_error:
         print("SSL error:", ssl_error)
         return None
