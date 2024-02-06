@@ -1,6 +1,6 @@
 #실제 메일 서버 주소 사용해서 테스트 outlook.office365.com
 #993 IMAPS는 IMAP과 크게 다른 것은 없고 암호화 통신을 함
-
+#이메일 정보를 출력하는 코드
 # 암호화 디코딩은 못함. 선택한 메일함 전부 출력하도록 만들어짐. 필요없는 정보는 없애기
 
 from ignore import username, password
