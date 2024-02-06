@@ -19,6 +19,6 @@ def check_port(host, port):
         s.close()
 
 # 호스트와 포트를 지정하여 호출
-host = "127.0.0.1"  # 연결 확인할 호스트 IP 주소
-port = 135  # 확인할 포트 번호
+host = "outlook.office365.com"  # 연결 확인할 호스트 IP 주소
+port = 145 # 확인할 포트 번호
 check_port(host, port)
