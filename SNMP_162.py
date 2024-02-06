@@ -2,23 +2,29 @@
 # 혹시나해서 None이라고 설정해주니까 됨.
 
 # 무한 수신 대기 - 수정중
-# 배너정보 출력하도록 수정하기
+# 정보 출력하도록 수정하기
 
 #SNMP Manager
 
-from pysnmp.hlapi import *
+# from pysnmp.hlapi import *
+# from pysnmp.carrier.asyncore.dispatch import AsyncoreDispatcher as TransportDispatcher
+# from pysnmp.carrier.asyncore.dgram import udp
+# import signal
+
 from pysnmp.carrier.asyncore.dispatch import AsyncoreDispatcher as TransportDispatcher
 from pysnmp.carrier.asyncore.dgram import udp
-import signal
+from pysnmp.hlapi import *
 
 # callback 함수를 SNMP_TRAP_receiver 함수 외부에 정의합니다.
 def callback(snmpEngine, stateReference, contextEngineID, contextName, varBinds=None, cbCtx=None):
+
     try:
-        print('SNMP TRAP 받음:', varBinds)
-        snmpEngine.transportDispatcher.jobFinished(1)  # 비동기 루프 종료
+        print('SNMP TRAP 받음')
     except Exception as e:
         print('SNMP 트랩 메시지가 수신되었지만 오류발생')
         print('콜백 함수 인자 처리 중 오류:', e)
+    finally:
+        snmpEngine.transportDispatcher.jobFinished(1)  # 비동기 루프 종료
         
     
 def SNMP_TRAP_receiver(config, port):
@@ -40,8 +46,8 @@ def SNMP_TRAP_receiver(config, port):
     snmp_engine = SnmpEngine()
     transportDispatcher.jobStarted(1)  # jobStarted에 전달된 1은 임의의 숫자입니다.
     
-    #ctrl+C를 눌러서 종료
-    signal.signal(signal.SIGINT, lambda signal, frame: snmp_engine.transportDispatcher.jobFinished(1))
+    #ctrl+C를 눌러서 종료를 하려고 했지만 안 됨
+    #signal.signal(signal.SIGINT, lambda signal, frame: snmp_engine.transportDispatcher.jobFinished(1))
     
     try:
         # 비동기적으로 SNMP 트랩 메시지를 수신
@@ -58,9 +64,9 @@ def SNMP_TRAP_receiver(config, port):
 if __name__ == '__main__':
     # SNMP 포트 (기본값은 162)
     port = 162
-    host = '127.0.0.1'
+    host = '192.168.0.35'
 
     # SNMP TRAP 수신을 위한 SNMP 포트 설정
-    config = UdpTransportTarget(('127.0.0.1', port))
+    config = UdpTransportTarget((host, port))
     
     SNMP_TRAP_receiver(config, port)
