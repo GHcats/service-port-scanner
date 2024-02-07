@@ -1,5 +1,4 @@
-# threading 구현 도전중
-# concurrent.futrues만 사용할 떄랑 크게 시간 차이 안 남
+# threading, concurrent.futrues 두 개 다 사용
 
 import threading
 import time

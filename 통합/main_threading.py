@@ -1,3 +1,5 @@
+# threading모듈만 사용
+
 import threading
 import time
 from scan import port123_ntp, port445_smb, port902_vmware_soap, port3306_mysql, IMAP_conn, SNMP_conn, IMAPS_conn
