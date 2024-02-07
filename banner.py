@@ -11,6 +11,9 @@ import time
 def IMAP_conn(host, port, use_ssl=False, timeout = 5):   
     #host = "imap.gmail.com"
     
+    # 타임아웃 설정
+    socket.setdefaulttimeout(timeout)
+    
     try:
         if use_ssl: #993 IMAPS
             imap_server = imaplib.IMAP4_SSL(host, port)
