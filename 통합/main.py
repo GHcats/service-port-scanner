@@ -3,6 +3,7 @@
 # 테스트라서 일단은 scan의 모든 함수 직접 가져옴
 
 import concurrent.futures
+import time
 from scan import port123_ntp, port445_smb, port902_vmware_soap, port3306_mysql, IMAP_conn, SNMP_conn, IMAPS_conn
 
 def scan_all(host):
@@ -43,4 +44,11 @@ def scan_all(host):
 if __name__ == "__main__":
     #'pool.ntp.org' #'127.0.0.1'
     host =  '127.0.0.1'
+    
+    startTime = time.time()
+    
     scan_all(host)
+    
+    endTime = time.time()
+    
+    print("Executed Time:", (endTime - startTime))
