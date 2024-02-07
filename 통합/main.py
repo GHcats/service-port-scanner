@@ -1,3 +1,5 @@
+# 테스트라서 일단은 scan의 모든 함수 직접 가져옴
+
 import threading
 import time
 from scan import port123_ntp, port445_smb, port902_vmware_soap, port3306_mysql, IMAP_conn, SNMP_conn, IMAPS_conn
