@@ -2,11 +2,9 @@ import socket
 import struct
 import time
 import uuid
-from smbprotocol.connection import Connection
-
 import imaplib
-import base64
 from pysnmp.hlapi import *
+from smbprotocol.connection import Connection
 
 
 def port123_ntp(host, timeout=1):
@@ -167,25 +165,32 @@ def IMAPS_conn(host, timeout = 10):
         
         # 배너정보 가져오기
         banner_info = imap_server.welcome
-        
+        print(f'배너정보: {banner_info}')
+            
         response_data.append({'port': port, 'status': 'open'})
         
-        # Base64로 인코딩된 데이터 추출
-        # 먼저 바이트 문자열에서 문자열로 변환
-        banner_info_str = banner_info.decode('utf-8')
-        pure_banner_info = banner_info_str.split('[')[0]
-        encoded_data = banner_info_str.split('[')[1].split(']')[0]
+        # 디코딩 과정 생략
+        # # 배너정보 가져오기
+        # banner_info = imap_server.welcome
+        
+        # response_data.append({'port': port, 'status': 'open'})
+        
+        # # Base64로 인코딩된 데이터 추출
+        # # 먼저 바이트 문자열에서 문자열로 변환
+        # banner_info_str = banner_info.decode('utf-8')
+        # pure_banner_info = banner_info_str.split('[')[0]
+        # encoded_data = banner_info_str.split('[')[1].split(']')[0]
        
-        # Base64 디코딩
-        decoded_data = base64.b64decode(encoded_data)
-        print(f'banner_info: {pure_banner_info}')
+        # # Base64 디코딩
+        # decoded_data = base64.b64decode(encoded_data)
+        # print(f'banner_info: {pure_banner_info}')
        
-        # 디코딩된 데이터를 문자열로 변환 (UTF-8 인코딩 사용)
-        try:
-            decoded_string = decoded_data.decode('utf-8')
-            print(f'생성서버: {decoded_string}')
-        except UnicodeDecodeError:
-            print("UTF-8 디코딩 실패")
+        # # 디코딩된 데이터를 문자열로 변환 (UTF-8 인코딩 사용)
+        # try:
+        #     decoded_string = decoded_data.decode('utf-8')
+        #     print(f'생성서버: {decoded_string}')
+        # except UnicodeDecodeError:
+        #     print("UTF-8 디코딩 실패")
             
         
             
@@ -207,7 +212,7 @@ def IMAPS_conn(host, timeout = 10):
 def SNMP_conn(host, timeout = 1):
     port = 161
     community = 'public'
-    host = '192.168.0.35' # 내 가상머신
+    host = '192.168.0.35' # 가상머신 서버
     
     response_data = []
 

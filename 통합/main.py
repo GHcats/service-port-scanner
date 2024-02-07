@@ -41,5 +41,6 @@ def scan_all(host):
         print(result)
 
 if __name__ == "__main__":
-    host =  '127.0.0.1'#'pool.ntp.org' #'127.0.0.1'
+    #'pool.ntp.org' #'127.0.0.1'
+    host =  '127.0.0.1'
     scan_all(host)
