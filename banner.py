@@ -1,23 +1,22 @@
 # 멀티스레드에 사용되는 banner 코드
-# 근데 왜 이렇게 오래 걸리지?
-# 얘가 찐임
+# 근데 왜 이렇게 오래 걸리지? -> 스레딩 구현한 코드에서는 빠르게 잘 됨
+# IMAP, IMAPS는 아웃룩 서버 이용해서 테스트
+# SNMP는 가상머신에 구축해서 테스트
 
 import imaplib
-import base64
 from pysnmp.hlapi import *
 import socket
 import time
 
-def IMAP_conn(host, port, use_ssl=False):   
-    #host = "outlook.office365.com"
-    host = "imap.gmail.com"
+def IMAP_conn(host, port, use_ssl=False, timeout = 5):   
+    #host = "imap.gmail.com"
     
     try:
         if use_ssl: #993 IMAPS
             imap_server = imaplib.IMAP4_SSL(host, port)
         else: #143 IMAP
             imap_server = imaplib.IMAP4(host, port)
-        print(f"\nConnected to {'IMAPS' if use_ssl else 'IMAP'} server successfully.\n")
+        print(f"\nConnected to {'IMAPS' if use_ssl else 'IMAP'} server successfully.")
         
         # 배너정보 가져오기
         banner_info = imap_server.welcome
@@ -37,13 +36,13 @@ def IMAP_conn(host, port, use_ssl=False):
         print(f"{port}포트 \n예기치 않은 오류 발생\n{e}\n")
         return None
     finally:
-        print(f"\n{'IMAPS' if use_ssl else 'IMAP'} 스캔 완료.\n")
+        print(f"\n{'IMAPS' if use_ssl else 'IMAP'} 스캔 완료.")
         print("************************************")
 
-def SNMP_conn(host):
+def SNMP_conn(host, timeout = 5):
     port = 161
     community = 'public'
-    host = '127.0.0.1'
+    #host = '192.168.0.35'
 
     # OID 객체 생성
     sysname_oid = ObjectIdentity('SNMPv2-MIB', 'sysName', 0) #시스템 이름
@@ -73,6 +72,7 @@ def SNMP_conn(host):
                     print(f"시스템 이름: {var_bind[1].prettyPrint()}")
                 elif sysdesc_oid.isPrefixOf(var_bind[0]):
                     print(f"시스템 설명: {var_bind[1].prettyPrint()}")
+            print("************************************")
     except socket.timeout as timeout_error:
         print(f"연결 시간 초과: {timeout_error}")
 
@@ -97,7 +97,6 @@ if __name__ == '__main__':
 
     # SNMP 연결
     SNMP_conn(host)
-    print('SNMP 스캔 완료')
     
     endTime = time.time()
     print("Executed Time:", (endTime - startTime))
