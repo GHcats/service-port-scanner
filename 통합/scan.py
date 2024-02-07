@@ -122,7 +122,7 @@ def port3306_mysql(host, timeout=1):
         return response_data
     
 
-def IMAP_conn(host, timeout = 10):
+def IMAP_conn(host):
     
     host = "outlook.office365.com"
     port = 143
@@ -151,7 +151,7 @@ def IMAP_conn(host, timeout = 10):
     return response_data
         
         
-def IMAPS_conn(host, timeout = 10):
+def IMAPS_conn(host):
     host = "outlook.office365.com"
     port = 993
     
@@ -209,7 +209,7 @@ def IMAPS_conn(host, timeout = 10):
     return response_data
     
 
-def SNMP_conn(host, timeout = 1):
+def SNMP_conn(host):
     port = 161
     community = 'public'
     host = '192.168.0.35' # 가상머신 서버
@@ -225,7 +225,7 @@ def SNMP_conn(host, timeout = 1):
         snmp_request = getCmd(
             SnmpEngine(),
             CommunityData(community),
-            UdpTransportTarget((host, port), timeout=10, retries=1),
+            UdpTransportTarget((host, port), timeout=1, retries=1),
             ContextData(),
             ObjectType(sysname_oid),
             ObjectType(sysdesc_oid)

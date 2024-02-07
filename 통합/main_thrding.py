@@ -1,8 +1,11 @@
 # threading 구현 도전중
+# concurrent.futrues만 사용할 떄랑 크게 시간 차이 안 남
 
 import threading
 import time
+from concurrent.futures import ThreadPoolExecutor
 from scan import port123_ntp, port445_smb, port902_vmware_soap, port3306_mysql, IMAP_conn, SNMP_conn, IMAPS_conn
+
 
 def run_scan(task, metadata, host, results):
     try:
@@ -26,22 +29,18 @@ def scan_all(host):
         (IMAPS_conn, {'port': 993}),
         (SNMP_conn, {'port': 161})
     ]
-
-    threads = []
+    
     results = []
+    lock = threading.Lock()
 
-    # 각 스캔 작업에 대한 스레드 생성 및 시작
-    for task, metadata in scan_tasks:
-        thread = threading.Thread(target=run_scan, args=(task, metadata, host, results))
-        threads.append(thread)
-        thread.start()
+    def thread_task(task, metadata):
+        run_scan(task, metadata, host, results)
 
-    # 모든 스레드가 완료될 때까지 기다립니다.
-    for thread in threads:
-        thread.join()
+    with ThreadPoolExecutor(max_workers=len(scan_tasks)) as executor:
+        for task, metadata in scan_tasks:
+            executor.submit(thread_task, task, metadata)
 
     # 결과를 포트 번호에 따라 정렬
-    # 여기에서 None 에러가 나서 일당 땜빵
     filtered_results = [r for r in results if r is not None]
     sorted_results = sorted(filtered_results, key=lambda x: x['port'])
 
