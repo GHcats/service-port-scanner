@@ -1,5 +1,4 @@
-# 테스트라서 일단은 scan의 모든 함수 직접 가져옴
-# threading 구현 못한 거라고 함. 다시 수정하기
+# threading 구현 도전중
 
 import threading
 import time
