@@ -6,18 +6,19 @@ import time
 from concurrent.futures import ThreadPoolExecutor
 from scan import port123_ntp, port445_smb, port902_vmware_soap, port3306_mysql, IMAP_conn, SNMP_conn, IMAPS_conn
 
-
-def run_scan(task, metadata, host, results):
+def run_scan(task,metadata, host, results, lock):
     try:
         result = task(host)
-        # port902_vmware_soap 함수의 결과가 리스트인 경우 처리
-        if isinstance(result, list):
-            results.extend(result)
-        else:
-            results.append(result)
+        with lock:
+            # port902_vmware_soap 함수의 결과가 리스트인 경우 처리
+            if isinstance(result, list):
+                results.extend(result)
+            else:
+                results.append(result)
     except Exception as e:
         error_result = {'port': metadata['port'], 'status': 'error', 'error_message': str(e)}
-        results.append(error_result)
+        with lock:
+            results.append(error_result)
 
 def scan_all(host):
     scan_tasks = [
@@ -33,20 +34,11 @@ def scan_all(host):
     results = []
     lock = threading.Lock()
 
-    def thread_task(task, metadata):
-        run_scan(task, metadata, host, results)
-
     with ThreadPoolExecutor(max_workers=len(scan_tasks)) as executor:
-        for task, metadata in scan_tasks:
-            executor.submit(thread_task, task, metadata)
+        futures = [executor.submit(run_scan, task,metadata, host, results, lock) for task, metadata in scan_tasks]
 
-    # 결과를 포트 번호에 따라 정렬
-    filtered_results = [r for r in results if r is not None]
-    sorted_results = sorted(filtered_results, key=lambda x: x['port'])
-
-    #sorted_results = sorted(results, key=lambda x: x['port'])
-
-    # 정렬된 결과 출력
+    [f.result() for f in futures]
+    sorted_results = sorted(results, key=lambda x: x['port'])
     print("***결과출력***")
     for result in sorted_results:
         print(result)

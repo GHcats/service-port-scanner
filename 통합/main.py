@@ -1,6 +1,5 @@
 # SNMP에서 아직 속도개선 필요
 # 출력되는 내용들 수정 필요
-# 테스트라서 일단은 scan의 모든 함수 직접 가져옴
 
 import concurrent.futures
 import time
