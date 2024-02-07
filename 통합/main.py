@@ -1,4 +1,5 @@
-# SNMP에서 아직 속도개선 필요함
+# SNMP에서 아직 속도개선 필요
+# 출력되는 내용들 수정 필요
 
 import concurrent.futures
 from scan import port123_ntp, port445_smb, port902_vmware_soap, port3306_mysql, IMAP_conn, SNMP_conn, IMAPS_conn
