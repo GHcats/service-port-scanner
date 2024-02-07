@@ -1,13 +1,13 @@
-# IMAPS_conn 에서 디코딩 과정을 안 없애서 오류가 날 수도 있습니다
-
 import socket
 import struct
 import time
 import uuid
+from smbprotocol.connection import Connection
+
 import imaplib
 import base64
 from pysnmp.hlapi import *
-from smbprotocol.connection import Connection
+
 
 def port123_ntp(host, timeout=1):
     port = 123
@@ -125,6 +125,8 @@ def port3306_mysql(host, timeout=1):
     
 
 def IMAP_conn(host, timeout = 10):
+    
+    host = "outlook.office365.com"
     port = 143
     #host = "imap.gmail.com"
     
@@ -150,9 +152,9 @@ def IMAP_conn(host, timeout = 10):
     
     return response_data
         
-
+        
 def IMAPS_conn(host, timeout = 10):
-    #host = "outlook.office365.com"
+    host = "outlook.office365.com"
     port = 993
     
     response_data = []
@@ -185,6 +187,8 @@ def IMAPS_conn(host, timeout = 10):
         except UnicodeDecodeError:
             print("UTF-8 디코딩 실패")
             
+        
+            
     except imaplib.IMAP4_SSL.error as ssl_error:
         print("SSL error:", ssl_error)
         return None
@@ -203,6 +207,7 @@ def IMAPS_conn(host, timeout = 10):
 def SNMP_conn(host, timeout = 1):
     port = 161
     community = 'public'
+    host = '192.168.0.35' # 내 가상머신
     
     response_data = []
 
