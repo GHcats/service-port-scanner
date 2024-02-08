@@ -1,6 +1,7 @@
 # 운지님, 현모님, 최승희 통합
 # 포트 오픈 여부 판단하도록 수정
 # 오픈된 것만 스캔
+# 테스트할 때는 1초 걸렸는데 왜 2초가 걸리지
 
 import concurrent.futures
 import time
