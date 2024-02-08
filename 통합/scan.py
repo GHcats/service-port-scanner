@@ -1,4 +1,4 @@
-# 현모님, 운지님, 최승희 통합
+# 현모님, 운지님, 영창님, 최승희 통합
 # 포트 오픈 여부 판별하도록 수정
 
 import socket
@@ -296,7 +296,8 @@ def IMAPS_conn(host):
         
         
     return response_data
-  
+
+#승희님 161    
 def SNMP_conn(host):
     port = 161
     community = 'public'
@@ -351,6 +352,78 @@ def SNMP_conn(host):
         response_data['status'] = 'error'
         response_data['error_message'] = e
     
+    return response_data
+
+
+#영창님 21
+def scan_ftp_port(host):
+    port = 21 #ftp 포트
+    response_data = {
+        'port': port,
+        'status': 'closed',
+        'banner': None,
+        'error_message': None
+    }
+    
+    try:
+        # FTP 서버에 연결 시도
+        sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+        sock.settimeout(5)  # 연결 시도 시간 초과 설정
+        result = sock.connect_ex((host, port))
+        
+        if result == 0:
+            # 포트가 열려 있을 때
+            banner = sock.recv(1024).decode('utf-8')
+            response_data['status'] = 'open'
+            response_data['banner'] = banner
+        else:
+            # 포트가 닫혀 있거나 필터링됐을 때
+            response_data['status'] = 'closed'
+        
+    except socket.error as err:
+        response_data['status'] = 'error'
+        response_data['error_message'] = str(err)
+        
+    finally:
+        # 소켓 닫기
+        sock.close()
+        
+    return response_data
+
+
+#영창님 22
+def scan_ssh_port(host):
+    port = 22 #ssh 포트
+    response_data = {
+        'port': port,
+        'status': 'closed',
+        'banner': None,
+        'error_message': None
+    }
+    
+    try:
+        # SSH 서버에 연결 시도
+        sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+        sock.settimeout(5)  # 연결 시도 시간 초과 설정
+        result = sock.connect_ex((host, port))
+        
+        if result == 0:
+            # 포트가 열려 있을 때
+            banner = sock.recv(1024).decode('utf-8')
+            response_data['status'] = 'open'
+            response_data['banner'] = banner
+        else:
+            # 포트가 닫혀 있거나 필터링됐을 때
+            response_data['status'] = 'closed'
+        
+    except socket.error as err:
+        response_data['status'] = 'error'
+        response_data['error_message'] = str(err)
+        
+    finally:
+        # 소켓 닫기
+        sock.close()
+        
     return response_data
 
     
