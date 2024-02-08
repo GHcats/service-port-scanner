@@ -1,6 +1,4 @@
-# 운지님, 현모님, 영창님, 동진님, 최승희 통합
 # 포트 오픈 여부 판단하도록 수정
-# 오픈된 것만 스캔
 
 import concurrent.futures
 import time
@@ -32,7 +30,10 @@ def scan_all(host):
         (udp_scan, {'port': 520}), #520번 포트 
         (scan_ldaps_port, {'port': 636}), #636번 포트 
         (scan_smtps_port, {'port': 465}),  # SMTPS 스캔 
-        (scan_ldap_port, {'port': 389})  # LDAP 스캔 
+        (scan_ldap_port, {'port': 389}),  # LDAP 스캔 
+        #다솜님
+        (port80_http, {'port': 80}),
+        (pop3_banner_grabbing, {'port': 110})
     ]
 
     results = []  # 결과를 저장할 리스트

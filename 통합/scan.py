@@ -52,99 +52,64 @@ def udp_scan(host, port):
         response_data['error_message'] = 'Received unexpected response.'
 
 
-def scan_smtp_port(host, port):
-    response_data = {
-        'port': port,
-        'state': 'closed'
-    }
-    
-    if syn_scan(host, port):
+def scan_smtp_port(ip, port):
+    response_data = {'port': port, 'status': 'closed', 'error': None, 'banner': None}
+    if syn_scan(ip, port):
         try:
-            # SMTP 서버에 연결
-            connection = socket.create_connection((host, port), timeout=10)
-            # 서버로부터 응답 받기
+            connection = socket.create_connection((ip, port), timeout=10)
             banner = connection.recv(1024).decode('utf-8')
-            response_data['state'] = 'open'
-            response_data['banner'] = banner
+            response_data.update({'status': 'open', 'banner': banner})
         except socket.error as err:
-            response_data['state'] = 'open'
-            response_data['error_message'] = 'error'
+            response_data.update({'status': 'open but unable to receive banner', 'error': str(err)})
         finally:
-            # 연결 종료
-            if 'connection' in locals():
-                connection.close()
+            connection.close()
     else:
-        response_data['state'] = 'Closed or filtered.'
-    
+        response_data['status'] = 'closed or filtered'
     return response_data
 
-
-def scan_smtps_port(host, port):
-    response_data = {
-        'port': port,
-        'state': 'closed'
-    }
-    
-    if syn_scan(host, port):
+def scan_smtps_port(ip, port):
+    response_data = {'port': port, 'status': 'closed', 'error': None, 'banner': None}
+    if syn_scan(ip, port):
         try:
             context = ssl.create_default_context()
-            with socket.create_connection((host, port)) as sock:
-                with context.wrap_socket(sock, server_hostname=host) as ssock:
+            with socket.create_connection((ip, port)) as sock:
+                with context.wrap_socket(sock, server_hostname=ip) as ssock:
                     banner = ssock.recv(1024).decode('utf-8')
-                    response_data['state'] = open
-                    response_data['banner'] = banner
+                    response_data.update({'status': 'open', 'banner': banner})
         except Exception as err:
-            response_data['state'] = 'error'
-            response_data['error_message'] = str(err)
+            response_data.update({'status': 'closed or filtered', 'error': str(err)})
     else:
-        response_data['state'] = 'Closed or filtered.'
-
-def scan_ldap_port(host, port):
-    response_data = {
-        'port': port,
-        'state': 'closed'
-    }
-    
-    if syn_scan(host, port):
-        try:
-            connection = socket.create_connection((host, port), timeout=10)
-            banner = connection.recv(1024).decode('utf-8')
-            response_data['state'] = 'open'
-            response_data['banner'] = banner
-        except socket.error as err:
-            response_data['state'] = 'error'
-            response_data['error_message'] = str(err)
-        finally:
-            if 'connection' in locals():
-                connection.close()
-    else:
-        response_data['state'] = 'Closed or filtered.'
-    
+        response_data['status'] = 'closed or filtered'
     return response_data
 
-def scan_ldaps_port(host, port):
-    response_data = {
-        'port': port,
-        'state': 'closed'
-    }
-
-    if syn_scan(host, port):
+def scan_ldap_port(ip, port):
+    response_data = {'port': port, 'status': 'closed', 'error': None, 'banner': None}
+    if syn_scan(ip, port):
         try:
-            # SSL/TLS 연결을 위한 컨텍스트 생성
-            context = ssl.create_default_context()
-            # SMTP 서버에 SSL/TLS 연결
-            with socket.create_connection((host, port)) as sock:
-                with context.wrap_socket(sock, server_hostname=host) as ssock:
-                    # 서버로부터 응답(배너) 받기
-                    banner = ssock.recv(1024).decode('utf-8')
-                    response_data['state'] = 'open'
-                    response_data['banner'] = banner
-        except Exception as err:
-            response_data['state'] = 'error'
-            response_data['error_message'] = str(err)
+            connection = socket.create_connection((ip, port), timeout=10)
+            banner = connection.recv(1024).decode('utf-8')
+            response_data.update({'status': 'open', 'banner': banner})
+        except socket.error as err:
+            response_data.update({'status': 'open but unable to receive banner', 'error': str(err)})
+        finally:
+            connection.close()
     else:
-        response_data['state'] = 'Closed or filtered.'
-    
+        response_data['status'] = 'closed or filtered'
+    return response_data
+
+def scan_ldaps_port(ip, port):
+    response_data = {'port': port, 'status': 'closed', 'error': None, 'banner': None}
+    if syn_scan(ip, port):
+        try:
+            context = ssl.create_default_context()
+            with socket.create_connection((ip, port)) as sock:
+                with context.wrap_socket(sock, server_hostname=ip) as ssock:
+                    banner = ssock.recv(1024).decode('utf-8')
+                    response_data.update({'status': 'open', 'banner': banner})
+        except Exception as err:
+            response_data.update({'status': 'closed or filtered', 'error': str(err)})
+    else:
+        response_data['status'] = 'closed or filtered'
     return response_data
 
 def Telnet_scan(host, port):
@@ -459,6 +424,71 @@ def scan_ssh_port(host, port):
         # 소켓 닫기
         sock.close()
         
+    return response_data
+
+
+#다솜님 80
+def port80_http(target_host, port):
+    response_data = {
+        'port': port,
+        'status': None,
+        'banner': None,
+        'error_message': None
+    }
+
+    try:
+        sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+        sock.settimeout(5) 
+        result = sock.connect_ex((target_host, port))
+
+        if result == 0:
+            response_data['status'] = 'open' 
+            http_request = b"HEAD / HTTP/1.1\r\nHost: " + target_host.encode() + b"\r\n\r\n"
+            sock.send(http_request)
+            response = b""
+            while b"\r\n\r\n" not in response:
+                chunk = sock.recv(1024)
+                if not chunk:
+                    break
+                response += chunk
+
+            banner = response.decode("utf-8").strip()
+            response_data['banner'] = banner
+        else:
+            response_data['status'] = 'closed' 
+    except Exception as e:
+        response_data['status'] = 'error'
+        response_data['error_message'] = str(e)
+    finally:
+        if sock:
+            sock.close()
+
+    return response_data
+
+#다솜님 110
+def pop3_banner_grabbing(target_host, port):
+    response_data = {
+        'port': port,
+        'status': None,
+        'banner': None,
+        'error_message': None
+    }
+    try:
+        sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+        sock.settimeout(3)
+        sock.connect((target_host, port))
+        response = sock.recv(1024).decode('utf-8')
+        response_data['status'] = 'open'
+        response_data['banner'] = response.strip()
+    except socket.timeout:
+        response_data['status'] = 'no response'
+    except Exception as e:
+        response_data['status'] = 'error'
+        response_data['error_message'] = str(e)
+    finally:
+        if sock:
+            sock.close()
+
     return response_data
 
     
