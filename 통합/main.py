@@ -1,5 +1,6 @@
 # SNMP에서 아직 속도개선 필요
 # 출력되는 내용들 수정 필요
+# 아 161이 닫혀있는데도 수행이 되게 만들어버렸네
 
 import concurrent.futures
 import time
