@@ -3,7 +3,7 @@
 import threading
 import time
 from concurrent.futures import ThreadPoolExecutor
-from scan import port123_ntp, port445_smb, port902_vmware_soap, port3306_mysql, IMAP_conn, SNMP_conn, IMAPS_conn
+from test_combination.scan import *
 
 def run_scan(task,metadata, host, results, lock):
     try:

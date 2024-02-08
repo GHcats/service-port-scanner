@@ -1,12 +1,8 @@
-# main copy에서 수정중
-
-# SNMP에서 아직 속도개선 필요
-# 출력되는 내용들 수정 필요
-# 아 161이 닫혀있는데도 수행이 되게 만들어버렸네
+# 운지님, 현모님, 최승희 통합
 
 import concurrent.futures
 import time
-from scan import port123_ntp, port445_smb, port902_vmware_soap, port3306_mysql, IMAP_conn, SNMP_conn, IMAPS_conn
+from scan import *
 
 def scan_all(host):
     # 각 스캔 작업을 함수와 연관 메타데이터(포트 번호)와 함께 정의
@@ -17,7 +13,11 @@ def scan_all(host):
         (port3306_mysql, {'port': 3306}),
         (IMAP_conn, {'port': 143}),
         (IMAPS_conn, {'port': 993}),
-        (SNMP_conn, {'port': 161})
+        (SNMP_conn, {'port': 161}),
+        (Telnet_scan, {'port': 23}),
+        (SMTP_scan, {'port': 25}),
+        (DNS_scan, {'port': 53})
+        
     ]
 
     results = []  # 결과를 저장할 리스트
@@ -39,9 +39,13 @@ def scan_all(host):
     # 결과를 포트 번호에 따라 정렬
     sorted_results = sorted(results, key=lambda x: x['port'] if isinstance(x, dict) else x[0]['port'])
 
-    # 정렬된 결과 출력
+    # 정렬된 결과 출력   
     for result in sorted_results:
-        print(result)
+        if isinstance(result, dict):
+            for key, value in result.items():
+                print(f"{key}: {value}")
+        print()
+    
 
 if __name__ == "__main__":
     #'pool.ntp.org' #'127.0.0.1'

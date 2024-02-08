@@ -1,10 +1,111 @@
+# 현모님, 운지님, 최승희 통합
+# 포트 오픈 여부 판별하도록 수정
+
 import socket
 import struct
 import time
 import uuid
 import imaplib
+import telnetlib
 from pysnmp.hlapi import *
 from smbprotocol.connection import Connection
+
+
+def SYN_scan(host, port):
+    try:
+        # 소켓 생성
+        sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+        sock.settimeout(5)  # 타임아웃 설정
+
+        # SYN 패킷 전송
+        result = sock.connect_ex((host, port))
+
+        # 결과 확인
+        if result == 0:
+            return True  # 포트가 열려있음
+        else:
+            return False  # 포트가 닫혀있음
+    except Exception as e:
+        return None  # 예외 발생 시 None 반환
+    finally:
+        sock.close()
+
+def Telnet_scan(host):
+    port = 23
+    service_name = "Telnet"
+    
+    response_data = {
+        'port': port,
+        'state': 'closed'
+    }
+    
+    try:
+        tn = telnetlib.Telnet(host, port, timeout=5)  # Telnet 객체 생성 및 서버에 연결 (타임아웃 설정)
+        banner = tn.read_until(b"\r\n", timeout=5).decode('utf-8').strip()  # 배너 정보 읽기
+        tn.close()  # 연결 종료
+        response_data['state'] = 'open'
+        response_data['banner'] = banner
+        #return {'port': port, 'status': 'open', 'service_name': service_name, 'banner': banner}
+    except ConnectionRefusedError:
+        response_data['error_message'] = '연결거부'
+        #return {'port': port, 'status': 'closed', 'service_name': service_name, 'banner': None}  # 연결이 거부되었을 때
+    except Exception as e:
+        response_data['state'] = 'error'
+        response_data['error_message'] = e
+        #return {'port': port, 'status': 'error', 'service_name': service_name, 'banner': None}  # 그 외 예외 발생 시
+    return response_data
+
+def SMTP_scan(host):
+    port = 25
+    service_name = "SMTP"
+    response_data = {
+        'port': port,
+        'state': 'closed'
+    }
+    try:
+        # 소켓 생성
+        sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+        sock.settimeout(5)  # 타임아웃 설정
+
+        # SMTP 서버에 연결
+        sock.connect((host, port))
+        banner = sock.recv(1024).decode('utf-8').strip()  # 배너 정보 읽기
+        sock.sendall(b"QUIT\r\n")  # QUIT 명령 전송
+        sock.close()  # 연결 종료
+        response_data['state'] = 'open'
+        response_data['banner'] = 'banner'
+        #return {'port': port, 'status': 'open', 'service_name': service_name, 'banner': banner}
+    except Exception as e:
+        response_data['state'] = 'error'
+        response_data['error_messsage'] = e
+        #return {'port': port, 'status': 'error', 'service_name': service_name, 'banner': None}  # 예외 발생 시
+    return response_data
+
+def DNS_scan(host):
+    port = 53
+    response_data = {
+        'port': port,
+        'state': 'closed'
+    }
+    try:
+        # UDP 소켓 생성
+        sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
+        sock.settimeout(1)  # 타임아웃 설정
+
+        # DNS 서버에 데이터 전송
+        sock.sendto(b'', (host, port))
+
+        # 데이터 수신 시 포트가 열려 있다고 가정
+        # UDP 스캔은 응답이 없어도 포트가 열려 있다고 가정합니다.
+        response_data['state'] = 'open'
+        response_data['banner'] = 'None'
+        #return {'port': port, 'status': 'open', 'service_name': 'DNS', 'banner': None}
+    except Exception as e:
+        response_data['error_message'] = e
+        #return {'port': port, 'status': 'closed', 'service_name': 'DNS', 'banner': None}
+    finally:
+        sock.close()
+    return response_data
 
 
 def port123_ntp(host, timeout=1):
@@ -124,140 +225,132 @@ def port3306_mysql(host, timeout=1):
 
 def IMAP_conn(host):
     
-    host = "outlook.office365.com"
+    host = "outlook.office365.com" #임시로 설정
     port = 143
     #host = "imap.gmail.com"
     
-    response_data = []
+    response_data = {
+        'port': port,
+        'status': 'closed',
+        'banner': None,
+    }
     
     try:
         imap_server = imaplib.IMAP4(host, port)
-        print(f"\nConnected to IMAP server successfully.")
-        
+                
         # 배너정보 가져오기
         banner_info = imap_server.welcome
-        print(f'배너정보: {banner_info}')
+        response_data['status'] = 'open'
+        response_data['banner'] = banner_info
         
         # 디코딩 과정 원래 있었는데 생략
-        response_data.append({'port': port, 'status': 'open'})
+               
         
     except imaplib.IMAP4.error as imap_error:
-        print("IMAP 오류:", imap_error)
+        #print("IMAP 오류:", imap_error)
+        response_data['status'] = 'error'
+        response_data['error_message'] = imap_error
         
 
     except Exception as e:
-        print(f"{port}포트 \n예기치 않은 오류 발생\n{e}\n")
-    
+        #print(f"{port}포트 \n예기치 않은 오류 발생\n{e}\n")
+        response_data['status'] = 'error'
+        response_data['error_message'] = e
+        
     return response_data
         
         
 def IMAPS_conn(host):
-    host = "outlook.office365.com"
+    host = "outlook.office365.com" #임시로 설정
     port = 993
     
-    response_data = []
+    response_data = {
+        'port': port,
+        'status': 'closed',
+        'banner': None,
+    }
     
     try:
         # IMAP 서버에 SSL 연결 설정
         imap_server = imaplib.IMAP4_SSL(host, port)
-        
-        print("\nConnected to IMAPS server successfully.")  
-        
+                
         # 배너정보 가져오기
         banner_info = imap_server.welcome
-        print(f'배너정보: {banner_info}')
-            
-        response_data.append({'port': port, 'status': 'open'})
-        
-        # 디코딩 과정 생략
-        # # 배너정보 가져오기
-        # banner_info = imap_server.welcome
-        
-        # response_data.append({'port': port, 'status': 'open'})
-        
-        # # Base64로 인코딩된 데이터 추출
-        # # 먼저 바이트 문자열에서 문자열로 변환
-        # banner_info_str = banner_info.decode('utf-8')
-        # pure_banner_info = banner_info_str.split('[')[0]
-        # encoded_data = banner_info_str.split('[')[1].split(']')[0]
-       
-        # # Base64 디코딩
-        # decoded_data = base64.b64decode(encoded_data)
-        # print(f'banner_info: {pure_banner_info}')
-       
-        # # 디코딩된 데이터를 문자열로 변환 (UTF-8 인코딩 사용)
-        # try:
-        #     decoded_string = decoded_data.decode('utf-8')
-        #     print(f'생성서버: {decoded_string}')
-        # except UnicodeDecodeError:
-        #     print("UTF-8 디코딩 실패")
-            
+        banner_info = imap_server.welcome
+        response_data['status'] = 'open'
+        response_data['banner'] = banner_info
         
             
     except imaplib.IMAP4_SSL.error as ssl_error:
-        print("SSL error:", ssl_error)
-        return None
-        
+        #print("SSL error:", ssl_error)
+        response_data['error_message'] = ssl_error
+    
     except imaplib.IMAP4.error as imap_error:
-        print("IMAP error:", imap_error)
-        return None
-        
+        response_data['status'] = 'error'
+        response_data['error_message'] = imap_error
+
     except Exception as e:
-        print("An unexpected error occurred:", e)
-        return None
-    
+        #print(f"{port}포트 \n예기치 않은 오류 발생\n{e}\n")
+        response_data['status'] = 'error'
+        response_data['error_message'] = e
+        
+        
     return response_data
-    
-# snmp 꺼져있을 때 더 오래걸림
+  
 def SNMP_conn(host):
     port = 161
     community = 'public'
     host = '192.168.0.35' # 가상머신 서버
     
-    response_data = []
+    response_data = {
+        'port': port,
+        'status': 'closed',
+    }
 
     # OID 객체 생성
     sysname_oid = ObjectIdentity('SNMPv2-MIB', 'sysName', 0) #시스템 이름
     sysdesc_oid = ObjectIdentity('SNMPv2-MIB', 'sysDescr', 0) #시스템 설명 정보 
-    print("객체 생성")
+    #print("객체 생성")
     
     try: 
         #SNMPD 요청 생성 및 응답
         snmp_request = getCmd(
             SnmpEngine(),
             CommunityData(community),
-            UdpTransportTarget((host, port), timeout=1, retries=1),
+            UdpTransportTarget((host, port), timeout=0.5, retries=1),
             ContextData(),
             ObjectType(sysname_oid),
             ObjectType(sysdesc_oid)
         )
-        print("SNMP 요청 생성")
-        
-        response_data.append({'port': port, 'status': 'open'})
         
         #요청에 대한 결과 추출
         error_indication, error_status, error_index, var_binds = next(snmp_request)
-        print("SNMP 응답 옴")
-        
+                
         if error_indication:
-                print(f"에러: {error_indication}")
+            response_data['status'] = 'error'
+            response_data['error_message'] = error_indication
         elif error_status:
-            print(f"에러 상태: {error_status}")
+            response_data['status'] = 'error'
+            response_data['error_message'] = 'SNMP error status'
         else:
-            print("\nConnected to SNMP server successfully.") 
+            response_data['status'] = 'open'
             for var_bind in var_binds:
                 if sysname_oid.isPrefixOf(var_bind[0]):
-                    print(f"시스템 이름: {var_bind[1].prettyPrint()}")
+                    response_data['sysname'] = var_bind[1].prettyPrint()
                 elif sysdesc_oid.isPrefixOf(var_bind[0]):
-                    print(f"시스템 설명: {var_bind[1].prettyPrint()}\n")
+                    response_data['sysinfo'] = var_bind[1].prettyPrint()
     except socket.timeout as timeout_error:
-        print(f"연결 시간 초과: {timeout_error}\n")
+        response_data['status'] = 'error'
+        response_data['error_message'] = timeout_error
 
     except socket.error as socket_error:
-        print(f"소켓 오류: {socket_error}\n")
+        response_data['status'] = 'error'
+        response_data['error_message'] = socket_error
 
     except Exception as e:
-        print("예기치 않은 오류 발생:\n", e)
+        response_data['status'] = 'error'
+        response_data['error_message'] = e
     
     return response_data
+
     
