@@ -208,7 +208,7 @@ def IMAPS_conn(host):
     
     return response_data
     
-
+# snmp 꺼져있을 때 더 오래걸림
 def SNMP_conn(host):
     port = 161
     community = 'public'
@@ -219,6 +219,7 @@ def SNMP_conn(host):
     # OID 객체 생성
     sysname_oid = ObjectIdentity('SNMPv2-MIB', 'sysName', 0) #시스템 이름
     sysdesc_oid = ObjectIdentity('SNMPv2-MIB', 'sysDescr', 0) #시스템 설명 정보 
+    print("객체 생성")
     
     try: 
         #SNMPD 요청 생성 및 응답
@@ -230,11 +231,13 @@ def SNMP_conn(host):
             ObjectType(sysname_oid),
             ObjectType(sysdesc_oid)
         )
+        print("SNMP 요청 생성")
         
         response_data.append({'port': port, 'status': 'open'})
         
         #요청에 대한 결과 추출
         error_indication, error_status, error_index, var_binds = next(snmp_request)
+        print("SNMP 응답 옴")
         
         if error_indication:
                 print(f"에러: {error_indication}")
