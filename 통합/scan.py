@@ -4,6 +4,7 @@
 # 스캔 부분은 일단 통합 먼저 하고 정리하자
 # servicename + tcp, udp도 출력하도록 수정하기
 # IMAP, IMAPS, LDAP, LDAPS 코드 합칠 수 있으면 합치기
+# 동진님 파트 출력 기준이 애매해서 다시 한번 확인하기
 
 import socket
 import struct
