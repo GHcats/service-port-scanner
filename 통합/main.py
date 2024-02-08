@@ -1,4 +1,6 @@
 # 운지님, 현모님, 최승희 통합
+# 포트 오픈 여부 판단하도록 수정
+# 오픈된 것만 스캔
 
 import concurrent.futures
 import time
