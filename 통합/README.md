@@ -7,10 +7,10 @@ main_threading.py - threading 모듈 사용
 똑같이 돌렸을 때 아직까지 크게 시간 차이 안 나는 것으로 확인
 
 사용 모듈
-socket
-struct
-time
-uuid
-imaplib
-pysnmp
-smbprotocol
+socket / 
+struct / 
+time / 
+uuid / 
+imaplib / 
+pysnmp / 
+smbprotocol / 
