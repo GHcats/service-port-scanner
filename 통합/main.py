@@ -16,17 +16,18 @@ def scan_all(host):
         (port3306_mysql, {'port': 3306}),
         #승희
         (IMAP_conn, {'port': 143}),
-        (IMAPS_conn, {'port': 993}),
+        (IMAP_conn, {'port': 993}),
+        #(IMAPS_conn, {'port': 993}),
         (SNMP_conn, {'port': 161}),
         #현모님
         (Telnet_scan, {'port': 23}),
-        (SMTP_scan, {'port': 25}),
+        #(SMTP_scan, {'port': 25}),
         (DNS_scan, {'port': 53}),
         #영창님
         (scan_ftp_port, {'port': 21}),
         (scan_ssh_port, {'port': 22}),
         #동진님
-        #(scan_smtp_port, {'port': 25}),  # 25번 포트 
+        (scan_smtp_port, {'port': 25}),  # 25번 포트 
         (scan_smtp_port, {'port': 587}),  # 587번 포트 
         (udp_scan, {'port': 520}), #520번 포트 
         (scan_ldaps_port, {'port': 636}), #636번 포트 
@@ -35,20 +36,22 @@ def scan_all(host):
     ]
 
     results = []  # 결과를 저장할 리스트
-
     with concurrent.futures.ThreadPoolExecutor() as executor:
         # 각 스캔 작업에 대한 future 생성
-        future_to_port = {executor.submit(task[0], host): task[1] for task in scan_tasks}
+        futures = []
+        for task, metadata in scan_tasks:
+            future = executor.submit(task, host, metadata['port'])
+            futures.append((future, metadata))
 
-        for future in concurrent.futures.as_completed(future_to_port):
-            task_metadata = future_to_port[future]
+        for future, metadata in futures:
             try:
                 result = future.result()
                 results.append(result)
             except Exception as e:
                 # 예외 발생 시 오류 메시지에 올바른 포트 번호를 포함
-                error_result = {'port': task_metadata['port'], 'status': 'error', 'error_message': str(e)}
+                error_result = {'port': metadata['port'], 'status': 'error', 'error_message': str(e)}
                 results.append(error_result)
+
 
     # 결과를 포트 번호에 따라 정렬
     filtered_results = [r for r in results if r is not None]
