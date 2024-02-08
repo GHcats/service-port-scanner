@@ -12,11 +12,11 @@ import time
 import uuid
 import imaplib
 import telnetlib
+import ssl
 from pysnmp.hlapi import *
 from smbprotocol.connection import Connection
-
 from scapy.all import sr, IP, TCP, UDP, ICMP, sr1
-import ssl
+
 
 # 현모님이 구현한 방식
 def SYN_scan(host, port):
@@ -121,7 +121,7 @@ def scan_smtps_port(host):
                     response_data['banner'] = banner
         except Exception as err:
             response_data['state'] = 'error'
-            response_data['error_message'] = err
+            response_data['error_message'] = str(err)
     else:
         response_data['state'] = 'Closed or filtered.'
 
@@ -140,7 +140,7 @@ def scan_ldap_port(host):
             response_data['banner'] = banner
         except socket.error as err:
             response_data['state'] = 'error'
-            response_data['error_message'] = err
+            response_data['error_message'] = str(err)
         finally:
             if 'connection' in locals():
                 connection.close()
@@ -169,7 +169,7 @@ def scan_ldaps_port(host):
                     response_data['banner'] = banner
         except Exception as err:
             response_data['state'] = 'error'
-            response_data['error_message'] = err
+            response_data['error_message'] = str(err)
     else:
         response_data['state'] = 'Closed or filtered.'
     
@@ -196,7 +196,7 @@ def Telnet_scan(host):
         #return {'port': port, 'status': 'closed', 'service_name': service_name, 'banner': None}  # 연결이 거부되었을 때
     except Exception as e:
         response_data['state'] = 'error'
-        response_data['error_message'] = e
+        response_data['error_message'] = str(e)
         #return {'port': port, 'status': 'error', 'service_name': service_name, 'banner': None}  # 그 외 예외 발생 시
     return response_data
 
@@ -222,7 +222,7 @@ def SMTP_scan(host):
         #return {'port': port, 'status': 'open', 'service_name': service_name, 'banner': banner}
     except Exception as e:
         response_data['state'] = 'error'
-        response_data['error_messsage'] = e
+        response_data['error_message'] = str(e)
         #return {'port': port, 'status': 'error', 'service_name': service_name, 'banner': None}  # 예외 발생 시
     return response_data
 
@@ -246,7 +246,7 @@ def DNS_scan(host):
         response_data['banner'] = 'None'
         #return {'port': port, 'status': 'open', 'service_name': 'DNS', 'banner': None}
     except Exception as e:
-        response_data['error_message'] = e
+        response_data['error_message'] = str(e)
         #return {'port': port, 'status': 'closed', 'service_name': 'DNS', 'banner': None}
     finally:
         sock.close()
@@ -391,7 +391,7 @@ def IMAP_conn(host):
     except Exception as e:
         #print(f"{port}포트 \n예기치 않은 오류 발생\n{e}\n")
         response_data['status'] = 'error'
-        response_data['error_message'] = e
+        response_data['error_message'] = str(e)
         
     return response_data
         
@@ -428,7 +428,7 @@ def IMAPS_conn(host):
     except Exception as e:
         #print(f"{port}포트 \n예기치 않은 오류 발생\n{e}\n")
         response_data['status'] = 'error'
-        response_data['error_message'] = e
+        response_data['error_message'] = str(e)
         
         
     return response_data
@@ -486,7 +486,7 @@ def SNMP_conn(host):
 
     except Exception as e:
         response_data['status'] = 'error'
-        response_data['error_message'] = e
+        response_data['error_message'] = str(e)
     
     return response_data
 
