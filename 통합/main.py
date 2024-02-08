@@ -1,4 +1,5 @@
 # 포트 오픈 여부 판단하도록 수정
+# 3초 걸림
 
 import concurrent.futures
 import time

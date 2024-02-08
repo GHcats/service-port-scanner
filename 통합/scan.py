@@ -459,6 +459,37 @@ def port80_http(target_host, port):
 
     return response_data
 
+# 영창님이 만들어주신거
+# def port80_http(target_host, port):
+#     response_data = {
+#         'port': 80,
+#         'status': None,
+#         'banner': None,
+#         'error_message': None
+#     }
+
+#     try:
+#         with socket.create_connection((target_host, 80), timeout=5) as sock:
+#             sock.sendall(b"HEAD / HTTP/1.1\r\nHost: " + target_host.encode() + b"\r\n\r\n")
+#             response = b""
+#             while b"\r\n\r\n" not in response:
+#                 chunk = sock.recv(1024)
+#                 if not chunk:
+#                     break
+#                 response += chunk
+
+#             banner = response.decode("utf-8").strip()
+#             response_data['status'] = 'open'
+#             response_data['banner'] = banner
+#     except socket.timeout:
+#         response_data['status'] = 'timeout'
+#         response_data['error_message'] = 'Connection timed out'
+#     except socket.error as e:
+#         response_data['status'] = 'error'
+#         response_data['error_message'] = str(e)
+
+#     return response_data
+
 #다솜님 110
 def pop3_banner_grabbing(target_host, port):
     response_data = {
