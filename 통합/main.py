@@ -26,7 +26,7 @@ def scan_all(host):
         (scan_ftp_port, {'port': 21}),
         (scan_ssh_port, {'port': 22}),
         #동진님
-        (scan_smtp_port, {'port': 25}),  # 25번 포트 
+        #(scan_smtp_port, {'port': 25}),  # 25번 포트 
         (scan_smtp_port, {'port': 587}),  # 587번 포트 
         (udp_scan, {'port': 520}), #520번 포트 
         (scan_ldaps_port, {'port': 636}), #636번 포트 

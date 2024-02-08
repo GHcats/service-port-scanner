@@ -5,6 +5,7 @@
 # servicename + tcp, udp도 출력하도록 수정하기
 # IMAP, IMAPS, LDAP, LDAPS 코드 합칠 수 있으면 합치기
 # 동진님 파트 출력 기준이 애매해서 다시 한번 확인하기
+# 현모님이랑 동진님이 25번포트 해주셔서 이 부분 수정하기
 
 import socket
 import struct
@@ -76,7 +77,7 @@ def udp_scan(host):
 
 
 def scan_smtp_port(host):
-    port = 25
+    port = 587
     
     response_data = {
         'port': port,
