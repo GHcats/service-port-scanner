@@ -1,5 +1,9 @@
-# 현모님, 운지님, 영창님, 최승희 통합
+# 현모님, 운지님, 영창님, 동진님, 최승희 통합
 # 포트 오픈 여부 판별하도록 수정
+
+# 스캔 부분은 일단 통합 먼저 하고 정리하자
+# servicename + tcp, udp도 출력하도록 수정하기
+# IMAP, IMAPS, LDAP, LDAPS 코드 합칠 수 있으면 합치기
 
 import socket
 import struct
@@ -10,7 +14,10 @@ import telnetlib
 from pysnmp.hlapi import *
 from smbprotocol.connection import Connection
 
+from scapy.all import sr, IP, TCP, UDP, ICMP, sr1
+import ssl
 
+# 현모님이 구현한 방식
 def SYN_scan(host, port):
     try:
         # 소켓 생성
@@ -25,10 +32,147 @@ def SYN_scan(host, port):
             return True  # 포트가 열려있음
         else:
             return False  # 포트가 닫혀있음
+        
     except Exception as e:
         return None  # 예외 발생 시 None 반환
     finally:
         sock.close()
+
+# 동진님이 구현한 방식
+def syn_scan(ip, port):
+    packet = IP(dst=ip)/TCP(dport=port, flags="S")
+    # sr 함수는 (발송된 패킷, 받은 응답) 튜플의 리스트를 반환
+    # 여기서는 받은 응답만 필요하므로, _ 를 사용해 발송된 패킷 부분을 무시
+    ans, _ = sr(packet, timeout=2, verbose=0)  # ans는 받은 응답 리스트
+    for sent, received in ans:
+        if received and received.haslayer(TCP):
+            if received[TCP].flags & 0x12:  # SYN-ACK 확인
+                return True  # 포트열림
+            elif received[TCP].flags & 0x14:  # RST-ACK 확인
+                return False  # 포트 닫힘
+    return False  # 응답없거나 다른에러
+
+def udp_scan(host):
+    port = 520
+    response_data = {
+        'port': port,
+        'state': 'open or filterd'
+    }
+    packet = IP(dst=host)/UDP(dport=port)
+    response = sr1(packet, timeout=2, verbose=0)
+    
+    if response is None:
+        response_data['error_message'] = 'No response (possibly open or filtered).'
+    elif response.haslayer(ICMP):
+        if int(response.getlayer(ICMP).type) == 3 and int(response.getlayer(ICMP).code) == 3:
+            response_data['state'] = 'closed'
+        else:
+            response_data['error_message'] = f"ICMP message received (type: {response.getlayer(ICMP).type}, code: {response.getlayer(ICMP).code})."
+            #print(f"Port {port}: ICMP message received (type: {response.getlayer(ICMP).type}, code: {response.getlayer(ICMP).code}).")
+    else:
+        response_data['error_message'] = 'Received unexpected response.'
+        #print(f"Port {port}: Received unexpected response.")
+
+
+def scan_smtp_port(host):
+    port = 25
+    
+    response_data = {
+        'port': port,
+        'state': 'closed'
+    }
+    
+    if syn_scan(host, port):
+        try:
+            # SMTP 서버에 연결
+            connection = socket.create_connection((host, port), timeout=10)
+            # 서버로부터 응답 받기
+            banner = connection.recv(1024).decode('utf-8')
+            response_data['state'] = 'open'
+            response_data['banner'] = banner
+        except socket.error as err:
+            response_data['state'] = 'open'
+            response_data['error_message'] = 'error'
+        finally:
+            # 연결 종료
+            if 'connection' in locals():
+                connection.close()
+    else:
+        response_data['state'] = 'Closed or filtered.'
+    
+    return response_data
+
+
+def scan_smtps_port(host):
+    port = 587
+    response_data = {
+        'port': port,
+        'state': 'closed'
+    }
+    
+    if syn_scan(host, port):
+        try:
+            context = ssl.create_default_context()
+            with socket.create_connection((ip, port)) as sock:
+                with context.wrap_socket(sock, server_hostname=ip) as ssock:
+                    banner = ssock.recv(1024).decode('utf-8')
+                    response_data['state'] = open
+                    response_data['banner'] = banner
+        except Exception as err:
+            response_data['state'] = 'error'
+            response_data['error_message'] = err
+    else:
+        response_data['state'] = 'Closed or filtered.'
+
+def scan_ldap_port(host):
+    port = 636
+    response_data = {
+        'port': port,
+        'state': 'closed'
+    }
+    
+    if syn_scan(host, port):
+        try:
+            connection = socket.create_connection((host, port), timeout=10)
+            banner = connection.recv(1024).decode('utf-8')
+            response_data['state'] = 'open'
+            response_data['banner'] = banner
+        except socket.error as err:
+            response_data['state'] = 'error'
+            response_data['error_message'] = err
+        finally:
+            if 'connection' in locals():
+                connection.close()
+    else:
+        response_data['state'] = 'Closed or filtered.'
+    
+    return response_data
+
+def scan_ldaps_port(host):
+    port = 389
+    response_data = {
+        'port': port,
+        'state': 'closed'
+    }
+
+    if syn_scan(host, port):
+        try:
+            # SSL/TLS 연결을 위한 컨텍스트 생성
+            context = ssl.create_default_context()
+            # SMTP 서버에 SSL/TLS 연결
+            with socket.create_connection((host, port)) as sock:
+                with context.wrap_socket(sock, server_hostname=host) as ssock:
+                    # 서버로부터 응답(배너) 받기
+                    banner = ssock.recv(1024).decode('utf-8')
+                    response_data['state'] = 'open'
+                    response_data['banner'] = banner
+        except Exception as err:
+            response_data['state'] = 'error'
+            response_data['error_message'] = err
+    else:
+        response_data['state'] = 'Closed or filtered.'
+    
+    return response_data
 
 def Telnet_scan(host):
     port = 23
@@ -147,56 +291,47 @@ def port445_smb(host, timeout=1):
     connection.disconnect()
     return response_data
 
-def port902_vmware_soap(host, timeout=1):
-    ports = [902]  # 902 포트만 스캔
-    response_data = []
+def port902_vmware_soap(host, port=902, timeout=1):
+    response_data = {'port': port, 'status': 'closed'} 
 
-    for port in ports:
+    try:
         sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
         sock.settimeout(timeout)
-        
-        try:
-            sock.connect((host, port))
+        sock.connect((host, port))
 
-            # SOAP 요청 본문 준비
-            soap_request = f"""POST /sdk HTTP/1.1
-            Host: {host}:{port}
-            Content-Type: text/xml; charset=utf-8
-            Content-Length: {{length}}
-            SOAPAction: "urn:internalvim25/5.5"
+        soap_request = f"""POST /sdk HTTP/1.1\r
+                            Host: {host}:{port}\r
+                            Content-Type: text/xml; charset=utf-8\r
+                            Content-Length: {{length}}\r
+                            SOAPAction: "urn:internalvim25/5.5"\r
+                            \r
+                            <?xml version="1.0" encoding="utf-8"?>
+                            <soapenv:Envelope xmlns:soapenv="http://schemas.xmlsoap.org/soap/envelope/" xmlns:vim25="urn:vim25">
+                            <soapenv:Header/>
+                            <soapenv:Body>
+                                <vim25:RetrieveServiceContent>
+                                <vim25:_this type="ServiceInstance">ServiceInstance</vim25:_this>
+                                </vim25:RetrieveServiceContent>
+                            </soapenv:Body>
+                            </soapenv:Envelope>"""
 
-            <?xml version="1.0" encoding="utf-8"?>
-            <soapenv:Envelope xmlns:soapenv="http://schemas.xmlsoap.org/soap/envelope/" xmlns:vim25="urn:vim25">
-            <soapenv:Header/>
-            <soapenv:Body>
-                <vim25:RetrieveServiceContent>
-                <vim25:_this type="ServiceInstance">ServiceInstance</vim25:_this>
-                </vim25:RetrieveServiceContent>
-            </soapenv:Body>
-            </soapenv:Envelope>"""
+        body = soap_request.format(length=len(soap_request) - 2)
+        sock.sendall(body.encode('utf-8'))
 
-            body = soap_request.format(length=len(soap_request))
-            sock.sendall(body.encode('utf-8'))
+        response = sock.recv(4096)
+        sock.close()
 
-            # 서비스로부터 응답 받기
-            response = sock.recv(4096)
+        if response:
+            response_data['status'] = 'open'
+            response_data['response'] = response.decode('utf-8', errors='ignore')
+        else:
+            response_data['status'] = 'no response'
 
-            if response:
-                response_data.append({
-                    'port': port,
-                    'status': 'open',
-                    'response': response.decode('utf-8', errors='ignore')
-                })
-            else:
-                response_data.append({'port': port, 'status': 'no response'})
-
-        except socket.error as e:
-            response_data.append({'port': port, 'status': 'error', 'error': str(e)})
-        finally:
-            sock.close()
+    except socket.error as e:
+        response_data['status'] = 'error'
+        response_data['error_message'] = str(e)
 
     return response_data
-
 
 def port3306_mysql(host, timeout=1):
     port = 3306
