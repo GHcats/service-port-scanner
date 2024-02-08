@@ -44,6 +44,7 @@ def scan_all(host):
             for key, value in result.items():
                 print(f"{key}: {value}")
         print()
+    
 
 if __name__ == "__main__":
     #'pool.ntp.org' #'127.0.0.1'
