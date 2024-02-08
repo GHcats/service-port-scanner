@@ -1,6 +1,3 @@
-# SNMP에서 아직 속도개선 필요
-# 출력되는 내용들 수정 필요
-# 아 161이 닫혀있는데도 수행이 되네
 # 포트 스캔을 따로 만드는게 좋을까 포트 함수 내에서 하는 ㄱ 좋을까
 # 포트가 닫혀있어도 수행을 하게 만들어야 하는지
 # 아니면 그냥 넘어가도 좋은건지 모르겠네
@@ -41,10 +38,7 @@ def scan_all(host):
     # 결과를 포트 번호에 따라 정렬
     sorted_results = sorted(results, key=lambda x: x['port'] if isinstance(x, dict) else x[0]['port'])
 
-    # 정렬된 결과 출력
-    for result in sorted_results:
-        print(result)
-    
+    # 정렬된 결과 출력   
     for result in sorted_results:
         if isinstance(result, dict):
             for key, value in result.items():
