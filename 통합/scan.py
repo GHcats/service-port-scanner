@@ -1,4 +1,6 @@
 # servicename + tcp, udp도 출력하도록 수정하기
+# 함수 이름 통합
+# 443포트도 추가하기
 
 import socket
 import struct
@@ -11,8 +13,22 @@ from pysnmp.hlapi import *
 from smbprotocol.connection import Connection
 from scapy.all import sr, IP, TCP, UDP, ICMP, sr1
 
+def scan_https_port(ip, port=443):
+    response_data = {'port': port, 'status': 'closed', 'error': None, 'banner': None}
+    if syn_scan(ip, port):
+        try:
+            context = ssl.create_default_context()
+            with socket.create_connection((ip, port)) as sock:
+                with context.wrap_socket(sock, server_hostname=ip) as ssock:
+                    # 서버로부터 응답 받기
+                    banner = ssock.recv(1024).decode('utf-8')
+                    response_data.update({'status': 'open', 'banner': banner})
+        except Exception as err:
+            response_data.update({'status': 'closed or filtered', 'error': str(err)})
+    else:
+        response_data['status'] = 'closed or filtered'
+    return response_data
 
-# 동진님이 구현한 방식
 def syn_scan(ip, port):
     packet = IP(dst=ip)/TCP(dport=port, flags="S")
     # sr 함수는 (발송된 패킷, 받은 응답) 튜플의 리스트를 반환

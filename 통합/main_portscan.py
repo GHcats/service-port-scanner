@@ -34,7 +34,6 @@ def scan_all(host):
         (scan_ldaps_port, {'port': 636}), #636번 포트 
         (scan_smtps_port, {'port': 465}),  # SMTPS 스캔 
         (scan_ldap_port, {'port': 389}),  # LDAP 스캔 
-        (scan_https_port, {'port': 443}),
         #다솜님
         (port80_http, {'port': 80}),
         (pop3_banner_grabbing, {'port': 110})
