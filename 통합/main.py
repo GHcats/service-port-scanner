@@ -45,9 +45,13 @@ def scan_all(host):
         for future, metadata in futures:
             try:
                 result = future.result()
+                # closed 제외시키려면 아래 주석 해제
                 if result['state'] != 'closed':
                     results.append(result)
                     open_ports_count += 1
+                
+                # 모든 결과 출력
+                # results.append(result)
 
             except Exception as e:
                 # 예외 발생 시 오류 메시지에 올바른 포트 번호를 포함
