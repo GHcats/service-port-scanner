@@ -3,7 +3,7 @@
 
 import concurrent.futures
 import time
-from scan_edit import *
+from scan import *
 
 
 def scan_all(host):
