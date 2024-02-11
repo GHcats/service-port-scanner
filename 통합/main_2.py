@@ -3,13 +3,12 @@
 import threading
 import time
 from concurrent.futures import ThreadPoolExecutor
-from test_combination.scan import *
+from scan import *
 
 def run_scan(task,metadata, host, results, lock):
     try:
         result = task(host)
         with lock:
-            # port902_vmware_soap 함수의 결과가 리스트인 경우 처리
             if isinstance(result, list):
                 results.extend(result)
             else:
@@ -21,14 +20,28 @@ def run_scan(task,metadata, host, results, lock):
 
 def scan_all(host):
     scan_tasks = [
-        (port123_ntp, {'port': 123}),
-        (port445_smb, {'port': 445}),
-        (port902_vmware_soap, {'port': 902}),  # port902_vmware_soap 수정으로 인해 이제 902 포트만 스캔
-        (port3306_mysql, {'port': 3306}),
-        (IMAP_conn, {'port': 143}),
-        (IMAPS_conn, {'port': 993}),
-        (SNMP_conn, {'port': 161})
-    ]
+    (scan_ftp_ssh_port,{'port': 21}),
+    (scan_ftp_ssh_port, {'port': 22}),
+    (scan_telnet_port, {'port': 23}),
+    (scan_smtp_ldap_port, {'port': 25}),
+    (scan_dns_port, {'port': 53}),
+    (scan_http_port, {'port': 80}),
+    (scan_pop3_port, {'port': 110}),
+    (scan_ntp_port, {'port': 123}),
+    (scan_imap_port, {'port': 143}),
+    (scan_snmp_port, {'port': 161}),
+    (scan_smtp_ldap_port, {'port': 389}),
+    (scan_ssl_port, {'port': 443}),
+    (scan_smb_port, {'port': 445}),
+    (scan_ssl_port, {'port': 465}),
+    (scan_udp_port, {'port': 520}),
+    (scan_smtp_ldap_port, {'port': 587}),
+    (scan_ssl_port, {'port': 636}),
+    (scan_vmware_soap_port, {'port': 902}),
+    (scan_imap_port, {'port': 993}),
+    (scan_mysql_port, {'port': 3306}),
+    (scan_rdp_port, {'port': 3389})
+]
     
     results = []
     lock = threading.Lock()

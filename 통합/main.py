@@ -35,7 +35,7 @@ def scan_all(host):
 
     results = []  # 결과를 저장할 리스트
     open_ports_count = 0
-    with concurrent.futures.ThreadPoolExecutor() as executor:
+    with concurrent.futures.ThreadPoolExecutor(max_workers=50) as executor:
         # 각 스캔 작업에 대한 future 생성
         futures = []
         for task, metadata in scan_tasks:
