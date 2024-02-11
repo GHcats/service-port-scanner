@@ -5,10 +5,6 @@
 # 중복 코드 병합
 # IMAP 시간 설정하기
 
-# 결과 제대로 나오는지 확인하기
-# 프로토콜도 나오게 해야하나
-# 25포트가 알 수 없는 서비스라고 나옴
-
 import socket
 import struct
 import time
@@ -20,7 +16,7 @@ from pysnmp.hlapi import *
 from smbprotocol.connection import Connection
 from scapy.all import sr, IP, TCP, UDP, ICMP, sr1
 
-#SMTPS, HTTPS, LDPAS
+#SMTPS, HTTPS, LDAPS
 def scan_ssl_port(ip, port):
     if port == 465:
         service_name = "SMTPS"
@@ -29,20 +25,20 @@ def scan_ssl_port(ip, port):
     elif port == 636:
         service_name = "LDAPS"
     else:
-        service_name = "알 수 없는 서비스2"
+        service_name = "알 수 없는 서비스"
 
-    response_data = {'service':service_name, 'port': port, 'status': 'closed'}
+    response_data = {'service':service_name, 'port': port, 'state': 'closed'}
     if syn_scan(ip, port):
         try:
             context = ssl.create_default_context()
             with socket.create_connection((ip, port)) as sock:
                 with context.wrap_socket(sock, server_hostname=ip) as ssock:
                     banner = ssock.recv(1024).decode('utf-8')
-                    response_data.update({'status': 'open', 'banner': banner})
+                    response_data.update({'state': 'open', 'banner': banner})
         except Exception as err:
-            response_data.update({'status': 'closed or filtered', 'error': str(err)})
+            response_data.update({'state': 'closed or filtered', 'error': str(err)})
     else:
-        response_data['status'] = 'closed or filtered'
+        response_data['state'] = 'closed or filtered'
     return response_data
 
 #SMTP, LDAP
@@ -56,17 +52,17 @@ def scan_smtp_ldap_port(ip, port):
     else:
         service_name = "알 수 없는 서비스"
 
-    response_data = {'service':service_name, 'port': port, 'status': 'closed', 'error': None}
+    response_data = {'service':service_name, 'port': port, 'state': 'closed', 'error': None}
     
     if syn_scan(ip, port):
         try:
             with socket.create_connection((ip,port), timeout=10) as connection:
                banner = connection.recv(1024).decode('utf-8')
-               response_data.update({'status': 'open', 'banner': banner})
+               response_data.update({'state': 'open', 'banner': banner})
         except socket.error as err:
-            response_data.update({'status': 'open but unable to receive banner', 'error': str(err)})
+            response_data.update({'state': 'open but unable to receive banner', 'error': str(err)})
     else:
-        response_data['status'] = 'closed or filtered'
+        response_data['state'] = 'closed or filtered'
     return response_data 
 
 def syn_scan(ip, port):
@@ -98,7 +94,7 @@ def scan_udp_port(host, port):
         if int(response.getlayer(ICMP).type) == 3 and int(response.getlayer(ICMP).code) == 3:
             response_data['state'] = 'closed'
         else:
-            response_data['error_message'] = f"ICMP message received (type: {response.getlayer(ICMP).type}, code: {response.getlayer(ICMP).code})."
+            response_data['error_message'] = f"ICMP message received (type: {response.getlayer(ICMP).type}, code: {response.getlayer(ICMP).code})"
     else:
         response_data['error_message'] = 'Received unexpected response.'
         
@@ -117,11 +113,9 @@ def scan_telnet_port(host, port):
         response_data['banner'] = banner
     except ConnectionRefusedError:
         response_data['error_message'] = '연결거부'
-        #return {'port': port, 'status': 'closed', 'service_name': service_name, 'banner': None}  # 연결이 거부되었을 때
     except Exception as e:
         response_data['state'] = 'error'
         response_data['error_message'] = str(e)
-        #return {'port': port, 'status': 'error', 'service_name': service_name, 'banner': None}  # 그 외 예외 발생 시
     return response_data
 
 def scan_dns_port(host, port):
@@ -138,10 +132,8 @@ def scan_dns_port(host, port):
         # UDP 스캔은 응답이 없어도 포트가 열려 있다고 가정합니다.
         response_data['state'] = 'open'
         response_data['banner'] = 'None'
-        #return {'port': port, 'status': 'open', 'service_name': 'DNS', 'banner': None}
     except Exception as e:
         response_data['error_message'] = str(e)
-        #return {'port': port, 'status': 'closed', 'service_name': 'DNS', 'banner': None}
     finally:
         sock.close()
     return response_data
@@ -163,7 +155,7 @@ def scan_ntp_port(host, port, timeout=1):
     response_data = {
         'service':'NTP',
         'port': port,
-        'status': 'open',
+        'state': 'open',
         'stratum': unpacked[1],
         'poll': unpacked[2],
         'precision': unpacked[3],
@@ -181,14 +173,14 @@ def scan_smb_port(host, port, timeout=1):
     response_data = {
         'service': 'SMB',
         'port': 445,
-        'status': 'open',
+        'state': 'open',
         'negotiated_dialect': connection.dialect
     }
     connection.disconnect()
     return response_data
 
 def scan_vmware_soap_port(host, port, timeout=1):
-    response_data = {'service':'VMWARE_SOAP', 'port': port, 'status': 'closed'} 
+    response_data = {'service':'VMWARE_SOAP', 'port': port, 'state': 'closed'} 
 
     try:
         sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
@@ -218,13 +210,13 @@ def scan_vmware_soap_port(host, port, timeout=1):
         sock.close()
 
         if response:
-            response_data['status'] = 'open'
+            response_data['state'] = 'open'
             response_data['response'] = response.decode('utf-8', errors='ignore')
         else:
-            response_data['status'] = 'no response'
+            response_data['state'] = 'no response'
 
     except socket.error as e:
-        response_data['status'] = 'error'
+        response_data['state'] = 'error'
         response_data['error_message'] = str(e)
 
     return response_data
@@ -246,7 +238,7 @@ def scan_mysql_port(host, port, timeout=1):
         response_data = {
             'service': 'MY SQL',
             'port': port,
-            'status': 'open',
+            'state': 'open',
             'server_version': server_version,
             'thread_id': thread_id,
             'server_capabilities': f'{server_capabilities:032b}'
@@ -255,7 +247,7 @@ def scan_mysql_port(host, port, timeout=1):
     
 
 def scan_imap_port(host, port, timeout = 5):    
-    response_data = {'service':'IMAP','port': port, 'status': 'closed'}
+    response_data = {'service':'IMAP','port': port, 'state': 'closed'}
     
     try:
         if port == 993:
@@ -264,19 +256,17 @@ def scan_imap_port(host, port, timeout = 5):
             imap_server = imaplib.IMAP4(host,port, timeout=timeout)
         # 배너정보 가져오기
         banner_info = imap_server.welcome
-        response_data['status'] = 'open'
+        response_data['state'] = 'open'
         response_data['banner'] = banner_info
         imap_server.logout()
         
     except imaplib.IMAP4.error as imap_error:
-        #print("IMAP 오류:", imap_error)
-        response_data['status'] = 'error'
+        response_data['state'] = 'error'
         response_data['error_message'] = imap_error
         
 
     except Exception as e:
-        #print(f"{port}포트 \n예기치 않은 오류 발생\n{e}\n")
-        response_data['status'] = 'error'
+        response_data['state'] = 'error'
         response_data['error_message'] = str(e)
         
     return response_data
@@ -284,7 +274,7 @@ def scan_imap_port(host, port, timeout = 5):
 #승희님 161    
 def scan_snmp_port(host, port):
     community = 'public'
-    response_data = {'service':'SNMP', 'port': port, 'status': 'closed'}
+    response_data = {'service':'SNMP', 'port': port, 'state': 'closed'}
 
     # OID 객체 생성
     sysname_oid = ObjectIdentity('SNMPv2-MIB', 'sysName', 0) #시스템 이름
@@ -305,13 +295,13 @@ def scan_snmp_port(host, port):
         error_indication, error_status, error_index, var_binds = next(snmp_request)
                 
         if error_indication:
-            response_data['status'] = 'error'
+            response_data['state'] = 'error'
             response_data['error_message'] = str(error_indication)
         elif error_status:
-            response_data['status'] = 'error'
-            response_data['error_message'] = f'SNMP error status: {error_status.prettyPrint()} at {error_index}'
+            response_data['state'] = 'error'
+            response_data['error_message'] = f'SNMP error state: {error_status.prettyPrint()} at {error_index}'
         else:
-            response_data['status'] = 'open'
+            response_data['state'] = 'open'
             for var_bind in var_binds:
                 if sysname_oid.isPrefixOf(var_bind[0]):
                     response_data['sysname'] = var_bind[1].prettyPrint()
@@ -319,15 +309,15 @@ def scan_snmp_port(host, port):
                     response_data['sysinfo'] = var_bind[1].prettyPrint()
     
     except socket.timeout as timeout_error:
-        response_data['status'] = 'error'
+        response_data['state'] = 'error'
         response_data['error_message'] = timeout_error
 
     except socket.error as socket_error:
-        response_data['status'] = 'error'
+        response_data['state'] = 'error'
         response_data['error_message'] = socket_error
 
     except Exception as e:
-        response_data['status'] = 'error'
+        response_data['state'] = 'error'
         response_data['error_message'] = f'Unexpected error: {str(e)}'
     
     return response_data
@@ -342,7 +332,7 @@ def scan_ftp_ssh_port(host,port):
     else:
         service_name = '알 수 없는 서비스'
         
-    response_data = {'service':service_name,'port': port, 'status': 'closed'}
+    response_data = {'service':service_name,'port': port, 'state': 'closed'}
 
     try:
         # FTP 서버에 연결 시도
@@ -353,14 +343,14 @@ def scan_ftp_ssh_port(host,port):
         if result == 0:
             # 포트가 열려 있을 때
             banner = sock.recv(1024).decode('utf-8')
-            response_data['status'] = 'open'
+            response_data['state'] = 'open'
             response_data['banner'] = banner
         else:
             # 포트가 닫혀 있거나 필터링됐을 때
-            response_data['status'] = 'closed'
+            response_data['state'] = 'closed'
         
     except socket.error as err:
-        response_data['status'] = 'error'
+        response_data['state'] = 'error'
         response_data['error_message'] = str(err)
         
     finally:
@@ -373,7 +363,7 @@ def scan_ftp_ssh_port(host,port):
 def scan_http_port(target_host, port):
     response_data = {
         'port': port,
-        'status': 'closed',
+        'state': 'closed',
     }
 
     try:
@@ -387,36 +377,55 @@ def scan_http_port(target_host, port):
                 response += chunk
 
             banner = response.decode("utf-8").strip()
-            response_data['status'] = 'open'
+            response_data['state'] = 'open'
             response_data['banner'] = banner
     except socket.timeout:
-        response_data['status'] = 'timeout'
+        response_data['state'] = 'timeout'
         response_data['error_message'] = 'Connection timed out'
     except socket.error as e:
-        response_data['status'] = 'error'
+        response_data['state'] = 'error'
         response_data['error_message'] = str(e)
 
     return response_data
 
 #다솜님 110
 def scan_pop3_port(target_host, port):
-    response_data = {'service':'POP3','port': port, 'status': 'closed'}
+    response_data = {'service':'POP3','port': port, 'state': 'closed'}
     try:
         sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
         sock.settimeout(3)
         sock.connect((target_host, port))
         response = sock.recv(1024).decode('utf-8')
-        response_data['status'] = 'open'
+        response_data['state'] = 'open'
         response_data['banner'] = response.strip()
     except socket.timeout:
-        response_data['status'] = 'no response'
+        response_data['state'] = 'no response'
     except Exception as e:
-        response_data['status'] = 'error'
+        response_data['state'] = 'error'
         response_data['error_message'] = str(e)
     finally:
         if sock:
             sock.close()
 
+    return response_data
+
+def scan_rdp_port(ip, port=3389):
+    response_data = {'port': port, 'state': 'closed', 'error': None}
+    if syn_scan(ip, port):
+        try:
+            # RDP 서버에 TCP 연결 시도
+            connection = socket.create_connection((ip, port), timeout=10)
+            response_data['state'] = 'open'
+            # RDP 서비스의 배너 정보를 직접 받는 것은 일반적이지 않으므로, 연결 성공 여부만 확인
+        except socket.error as err:
+            response_data['state'] = 'open but unable to connect'
+            response_data['error'] = str(err)
+        finally:
+            # 연결이 성공적으로 생성되었으면 종료
+            if 'connection' in locals():
+                connection.close()
+    else:
+        response_data['state'] = 'closed or filtered'
     return response_data
 
     
