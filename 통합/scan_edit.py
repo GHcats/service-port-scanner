@@ -264,7 +264,6 @@ def scan_imap_port(host, port, timeout = 5):
         response_data['state'] = 'error'
         response_data['error_message'] = imap_error
         
-
     except Exception as e:
         response_data['state'] = 'error'
         response_data['error_message'] = str(e)
@@ -322,7 +321,7 @@ def scan_snmp_port(host, port):
     
     return response_data
 
-# 영창님 21, 22도 동일한 tcp 연결방식임. socket으로 완전 연결시도/동진님은 syn scan방식
+# 영창님 21, 22 통합도 동일한 tcp 연결방식임. socket으로 완전 연결시도/동진님은 syn scan방식
 # 일단 통합시켜보기
 def scan_ftp_ssh_port(host,port):
     if port == 21:

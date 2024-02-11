@@ -1,51 +1,40 @@
-# main_edit에서 수정중
+# 수정사항
+# status 가 closed 인 거는 제외하고 출력
 
 import concurrent.futures
 import time
-from scan import *
+from scan_edit import *
+
 
 def scan_all(host):
-    # 각 스캔 작업을 함수와 연관 메타데이터(포트 번호)와 함께 정의
+    # 각 스캔 작업을 함수와 연관 메타데이터(포트 번호)와 함께 정의    
     scan_tasks = [
-        #운지님
-        (port123_ntp, {'port': 123}),
-        (port445_smb, {'port': 445}),
-        (port902_vmware_soap, {'port': 902}),  # 902 포트만 스캔
-        (port3306_mysql, {'port': 3306}),
-        #승희
-        (IMAP_conn, {'port': 143}),
-        (IMAP_conn, {'port': 993}),
-        #(IMAPS_conn, {'port': 993}),
-        (SNMP_conn, {'port': 161}),
-        #현모님
-        (Telnet_scan, {'port': 23}),
-        #(SMTP_scan, {'port': 25}),
-        (DNS_scan, {'port': 53}),
-        #영창님
-        (scan_ftp_port, {'port': 21}),
-        (scan_ssh_port, {'port': 22}),
-        #동진님
-        (scan_smtp_port, {'port': 25}),  # 25번 포트 
-        (scan_smtp_port, {'port': 587}),  # 587번 포트 
-        (udp_scan, {'port': 520}), #520번 포트 
-        (scan_ldaps_port, {'port': 636}), #636번 포트 
-        (scan_smtps_port, {'port': 465}),  # SMTPS 스캔 
-        (scan_ldap_port, {'port': 389}),  # LDAP 스캔 
-        (scan_https_port, {'port': 443}),
-        # (ssl_port_scan, {'port': 443}),
-        # (ssl_port_scan, {'port': 636}),
-        # (ssl_port_scan, {'port': 465}),
-        # (tcp_port_scan, {'port': 25}),
-        # (tcp_port_scan, {'port': 587}),
-        # (tcp_port_scan, {'port': 389}),
-        #다솜님
-        (port80_http, {'port': 80}),
-        (pop3_banner_grabbing, {'port': 110})
-    ]
-    
+    (scan_ftp_ssh_port,{'port': 21}),
+    (scan_ftp_ssh_port, {'port': 22}),
+    (scan_telnet_port, {'port': 23}),
+    (scan_smtp_ldap_port, {'port': 25}),
+    (scan_dns_port, {'port': 53}),
+    (scan_http_port, {'port': 80}),
+    (scan_pop3_port, {'port': 110}),
+    (scan_ntp_port, {'port': 123}),
+    (scan_imap_port, {'port': 143}),
+    (scan_snmp_port, {'port': 161}),
+    (scan_smtp_ldap_port, {'port': 389}),
+    (scan_ssl_port, {'port': 443}),
+    (scan_smb_port, {'port': 445}),
+    (scan_ssl_port, {'port': 465}),
+    (scan_udp_port, {'port': 520}),
+    (scan_smtp_ldap_port, {'port': 587}),
+    (scan_ssl_port, {'port': 636}),
+    (scan_vmware_soap_port, {'port': 902}),
+    (scan_imap_port, {'port': 993}),
+    (scan_mysql_port, {'port': 3306}),
+    (scan_rdp_port, {'port': 3389})
+]
 
 
     results = []  # 결과를 저장할 리스트
+    open_ports_count = 0
     with concurrent.futures.ThreadPoolExecutor() as executor:
         # 각 스캔 작업에 대한 future 생성
         futures = []
@@ -56,7 +45,10 @@ def scan_all(host):
         for future, metadata in futures:
             try:
                 result = future.result()
-                results.append(result)
+                if result['state'] != 'closed':
+                    results.append(result)
+                    open_ports_count += 1
+
             except Exception as e:
                 # 예외 발생 시 오류 메시지에 올바른 포트 번호를 포함
                 error_result = {'port': metadata['port'], 'status': 'error', 'error_message': str(e)}
@@ -68,6 +60,7 @@ def scan_all(host):
     sorted_results = sorted(filtered_results, key=lambda x: x['port'] if isinstance(x, dict) else x[0]['port'])
     
     # 정렬된 결과 출력   
+    print(f"Open ports count: {open_ports_count}")
     for result in sorted_results:
         if isinstance(result, dict):
             for key, value in result.items():
