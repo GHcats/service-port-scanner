@@ -1,3 +1,4 @@
+# 수정사항
 # servicename 출력하도록 수정하기
 # 함수 이름 통합
 # 443추가
@@ -5,7 +6,7 @@
 # IMAP 시간 설정하기
 
 # 결과 제대로 나오는지 확인하기
-# 프로토콜도 나오게 할까
+# 프로토콜도 나오게 해야하나
 
 import socket
 import struct
@@ -310,10 +311,10 @@ def scan_snmp_port(host, port):
                 
         if error_indication:
             response_data['status'] = 'error'
-            response_data['error_message'] = error_indication
+            response_data['error_message'] = str(error_indication)
         elif error_status:
             response_data['status'] = 'error'
-            response_data['error_message'] = 'SNMP error status'
+            response_data['error_message'] = f'SNMP error status: {error_status.prettyPrint()} at {error_index}'
         else:
             response_data['status'] = 'open'
             for var_bind in var_binds:
@@ -321,6 +322,7 @@ def scan_snmp_port(host, port):
                     response_data['sysname'] = var_bind[1].prettyPrint()
                 elif sysdesc_oid.isPrefixOf(var_bind[0]):
                     response_data['sysinfo'] = var_bind[1].prettyPrint()
+    
     except socket.timeout as timeout_error:
         response_data['status'] = 'error'
         response_data['error_message'] = timeout_error
@@ -331,7 +333,7 @@ def scan_snmp_port(host, port):
 
     except Exception as e:
         response_data['status'] = 'error'
-        response_data['error_message'] = str(e)
+        response_data['error_message'] = f'Unexpected error: {str(e)}'
     
     return response_data
 
