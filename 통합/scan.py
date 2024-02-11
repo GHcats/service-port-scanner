@@ -89,14 +89,14 @@ def scan_udp_port(host, port):
     response = sr1(packet, timeout=2, verbose=0)
     
     if response is None:
-        response_data['error_message'] = 'No response (possibly open or filtered).'
+        response_data['error'] = 'No response (possibly open or filtered).'
     elif response.haslayer(ICMP):
         if int(response.getlayer(ICMP).type) == 3 and int(response.getlayer(ICMP).code) == 3:
             response_data['state'] = 'closed'
         else:
-            response_data['error_message'] = f"ICMP message received (type: {response.getlayer(ICMP).type}, code: {response.getlayer(ICMP).code})"
+            response_data['error'] = f"ICMP message received (type: {response.getlayer(ICMP).type}, code: {response.getlayer(ICMP).code})"
     else:
-        response_data['error_message'] = 'Received unexpected response.'
+        response_data['error'] = 'Received unexpected response.'
         
     return response_data
 
@@ -112,10 +112,10 @@ def scan_telnet_port(host, port):
         response_data['state'] = 'open'
         response_data['banner'] = banner
     except ConnectionRefusedError:
-        response_data['error_message'] = '연결거부'
+        response_data['error'] = '연결거부'
     except Exception as e:
         response_data['state'] = 'error'
-        response_data['error_message'] = str(e)
+        response_data['error'] = str(e)
     return response_data
 
 def scan_dns_port(host, port):
@@ -133,7 +133,7 @@ def scan_dns_port(host, port):
         response_data['state'] = 'open'
         response_data['banner'] = 'None'
     except Exception as e:
-        response_data['error_message'] = str(e)
+        response_data['error'] = str(e)
     finally:
         sock.close()
     return response_data
@@ -217,7 +217,7 @@ def scan_vmware_soap_port(host, port, timeout=1):
 
     except socket.error as e:
         response_data['state'] = 'error'
-        response_data['error_message'] = str(e)
+        response_data['error'] = str(e)
 
     return response_data
 
@@ -262,11 +262,11 @@ def scan_imap_port(host, port, timeout = 5):
         
     except imaplib.IMAP4.error as imap_error:
         response_data['state'] = 'error'
-        response_data['error_message'] = imap_error
+        response_data['error'] = imap_error
         
     except Exception as e:
         response_data['state'] = 'error'
-        response_data['error_message'] = str(e)
+        response_data['error'] = str(e)
         
     return response_data
 
@@ -295,10 +295,10 @@ def scan_snmp_port(host, port):
                 
         if error_indication:
             response_data['state'] = 'error'
-            response_data['error_message'] = str(error_indication)
+            response_data['error'] = str(error_indication)
         elif error_status:
             response_data['state'] = 'error'
-            response_data['error_message'] = f'SNMP error state: {error_status.prettyPrint()} at {error_index}'
+            response_data['error'] = f'SNMP error state: {error_status.prettyPrint()} at {error_index}'
         else:
             response_data['state'] = 'open'
             for var_bind in var_binds:
@@ -309,15 +309,15 @@ def scan_snmp_port(host, port):
     
     except socket.timeout as timeout_error:
         response_data['state'] = 'error'
-        response_data['error_message'] = timeout_error
+        response_data['error'] = timeout_error
 
     except socket.error as socket_error:
         response_data['state'] = 'error'
-        response_data['error_message'] = socket_error
+        response_data['error'] = socket_error
 
     except Exception as e:
         response_data['state'] = 'error'
-        response_data['error_message'] = f'Unexpected error: {str(e)}'
+        response_data['error'] = f'Unexpected error: {str(e)}'
     
     return response_data
 
@@ -349,7 +349,7 @@ def scan_ftp_ssh_port(host,port):
         
     except socket.error as err:
         response_data['state'] = 'error'
-        response_data['error_message'] = str(err)
+        response_data['error'] = str(err)
         
     finally:
         # 소켓 닫기
@@ -379,10 +379,10 @@ def scan_http_port(target_host, port):
             response_data['banner'] = banner
     except socket.timeout:
         response_data['state'] = 'timeout'
-        response_data['error_message'] = 'Connection timed out'
+        response_data['error'] = 'Connection timed out'
     except socket.error as e:
         response_data['state'] = 'error'
-        response_data['error_message'] = str(e)
+        response_data['error'] = str(e)
 
     return response_data
 
@@ -400,7 +400,7 @@ def scan_pop3_port(target_host, port):
         response_data['state'] = 'no response'
     except Exception as e:
         response_data['state'] = 'error'
-        response_data['error_message'] = str(e)
+        response_data['error'] = str(e)
     finally:
         if sock:
             sock.close()
