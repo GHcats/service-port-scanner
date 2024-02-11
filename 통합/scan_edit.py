@@ -1,10 +1,11 @@
-# servicename + tcp, udp도 출력하도록 수정하기
+# servicename 출력하도록 수정하기
 # 함수 이름 통합
 # 443추가
 # 중복 코드 병합
-# 결과 제대로 나오는지 확인하기
-
 # IMAP 시간 설정하기
+
+# 결과 제대로 나오는지 확인하기
+# 프로토콜도 나오게 할까
 
 import socket
 import struct
@@ -43,7 +44,7 @@ def scan_ssl_port(ip, port):
     return response_data
 
 #SMTP, LDAP
-def scan_tcp_port(ip, port):
+def scan_smtp_ldap_port(ip, port):
     if port == 25:
         service_name = "SMTP"
     if port == 587:
@@ -251,20 +252,21 @@ def scan_mysql_port(host, port, timeout=1):
         return response_data
     
 
-def scan_imap_port(host, port, timeout = 10):
-    host = "outlook.office365.com" #임시로 설정
+def scan_imap_port(host, port, timeout = 1):
+    #host = "outlook.office365.com" #임시로 설정
     
     response_data = {'service':'IMAP','port': port, 'status': 'closed', 'banner': None}
     
     try:
         if port == 993:
-            imap_server = imaplib.IMAP4_SSL(host,port)
+            imap_server = imaplib.IMAP4_SSL(host,port, timeout=timeout)
         else:
-            imap_server = imaplib.IMAP4(host,port)
+            imap_server = imaplib.IMAP4(host,port, timeout=timeout)
         # 배너정보 가져오기
         banner_info = imap_server.welcome
         response_data['status'] = 'open'
         response_data['banner'] = banner_info
+        imap_server.logout()
         
         # 디코딩 과정 원래 있었는데 생략
         
@@ -284,14 +286,13 @@ def scan_imap_port(host, port, timeout = 10):
 #승희님 161    
 def scan_snmp_port(host, port):
     community = 'public'
-    host = '192.168.0.35' # 가상머신 서버
+    #host = '192.168.0.35' # 가상머신 서버
     
     response_data = {'service':'SNMP', 'port': port, 'status': 'closed', 'banner': None}
 
     # OID 객체 생성
     sysname_oid = ObjectIdentity('SNMPv2-MIB', 'sysName', 0) #시스템 이름
     sysdesc_oid = ObjectIdentity('SNMPv2-MIB', 'sysDescr', 0) #시스템 설명 정보 
-    #print("객체 생성")
     
     try: 
         #SNMPD 요청 생성 및 응답
@@ -334,44 +335,20 @@ def scan_snmp_port(host, port):
     
     return response_data
 
+# 영창님 21, 22도 동일한 tcp 연결방식임. socket으로 연결시도/동진님은 syn scan방식
+# 일단 통합시켜보기
+def scan_ftp_ssh_port(host,port):
+    if port == 21:
+        service_name = 'FTP'
+    elif port == 22:
+        service_name = 'SSH'
+    else:
+        service_name = '알 수 없는 서비스'
+        
+    response_data = {'service':service_name,'port': port, 'status': 'closed', 'banner': None, 'error_message': None}
 
-#영창님 21
-def scan_ftp_port(host, port):
-    response_data = {'service':'FTP','port': port, 'status': 'closed', 'banner': None, 'error_message': None}
-    
     try:
         # FTP 서버에 연결 시도
-        sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-        sock.settimeout(5)  # 연결 시도 시간 초과 설정
-        result = sock.connect_ex((host, port))
-        
-        if result == 0:
-            # 포트가 열려 있을 때
-            banner = sock.recv(1024).decode('utf-8')
-            response_data['status'] = 'open'
-            response_data['banner'] = banner
-        else:
-            # 포트가 닫혀 있거나 필터링됐을 때
-            response_data['status'] = 'closed'
-        
-    except socket.error as err:
-        response_data['status'] = 'error'
-        response_data['error_message'] = str(err)
-        
-    finally:
-        # 소켓 닫기
-        sock.close()
-        
-    return response_data
-
-
-#영창님 22
-def scan_ssh_port(host, port):
-    #port = 22 #ssh 포트
-    response_data = {'service':'SSH','port': port, 'status': 'closed', 'banner': None, 'error_message': None}
-    
-    try:
-        # SSH 서버에 연결 시도
         sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
         sock.settimeout(5)  # 연결 시도 시간 초과 설정
         result = sock.connect_ex((host, port))
