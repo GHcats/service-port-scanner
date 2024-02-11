@@ -1,5 +1,5 @@
 # 수정사항
-# status 가 closed 인 거는 제외하고 출력
+# status 가 closed 인 거는 제외하고 출력 + closed or filtered도 제외
 
 import concurrent.futures
 import time
@@ -45,8 +45,7 @@ def scan_all(host):
         for future, metadata in futures:
             try:
                 result = future.result()
-                # closed 제외하고 출력
-                if result['state'] != 'closed':
+                if 'closed' not in result.get('state', '').lower() and 'closed or filtered' not in result.get('state', '').lower():
                     results.append(result)
                     open_ports_count += 1
                 
