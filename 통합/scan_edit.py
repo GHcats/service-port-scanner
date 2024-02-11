@@ -7,6 +7,7 @@
 
 # 결과 제대로 나오는지 확인하기
 # 프로토콜도 나오게 해야하나
+# 25포트가 알 수 없는 서비스라고 나옴
 
 import socket
 import struct
@@ -28,9 +29,9 @@ def scan_ssl_port(ip, port):
     elif port == 636:
         service_name = "LDAPS"
     else:
-        service_name = "알 수 없는 서비스"
+        service_name = "알 수 없는 서비스2"
 
-    response_data = {'service':service_name, 'port': port, 'status': 'closed', 'error': None, 'banner': None}
+    response_data = {'service':service_name, 'port': port, 'status': 'closed'}
     if syn_scan(ip, port):
         try:
             context = ssl.create_default_context()
@@ -48,14 +49,14 @@ def scan_ssl_port(ip, port):
 def scan_smtp_ldap_port(ip, port):
     if port == 25:
         service_name = "SMTP"
-    if port == 587:
+    elif port == 587:
         service_name = "SMTP"
     elif port == 389:
         service_name = "LDAP"
     else:
         service_name = "알 수 없는 서비스"
 
-    response_data = {'service':service_name, 'port': port, 'status': 'closed', 'error': None, 'banner': None}
+    response_data = {'service':service_name, 'port': port, 'status': 'closed', 'error': None}
     
     if syn_scan(ip, port):
         try:
@@ -253,10 +254,8 @@ def scan_mysql_port(host, port, timeout=1):
         return response_data
     
 
-def scan_imap_port(host, port, timeout = 1):
-    #host = "outlook.office365.com" #임시로 설정
-    
-    response_data = {'service':'IMAP','port': port, 'status': 'closed', 'banner': None}
+def scan_imap_port(host, port, timeout = 5):    
+    response_data = {'service':'IMAP','port': port, 'status': 'closed'}
     
     try:
         if port == 993:
@@ -268,8 +267,6 @@ def scan_imap_port(host, port, timeout = 1):
         response_data['status'] = 'open'
         response_data['banner'] = banner_info
         imap_server.logout()
-        
-        # 디코딩 과정 원래 있었는데 생략
         
     except imaplib.IMAP4.error as imap_error:
         #print("IMAP 오류:", imap_error)
@@ -287,9 +284,7 @@ def scan_imap_port(host, port, timeout = 1):
 #승희님 161    
 def scan_snmp_port(host, port):
     community = 'public'
-    #host = '192.168.0.35' # 가상머신 서버
-    
-    response_data = {'service':'SNMP', 'port': port, 'status': 'closed', 'banner': None}
+    response_data = {'service':'SNMP', 'port': port, 'status': 'closed'}
 
     # OID 객체 생성
     sysname_oid = ObjectIdentity('SNMPv2-MIB', 'sysName', 0) #시스템 이름
@@ -337,7 +332,7 @@ def scan_snmp_port(host, port):
     
     return response_data
 
-# 영창님 21, 22도 동일한 tcp 연결방식임. socket으로 연결시도/동진님은 syn scan방식
+# 영창님 21, 22도 동일한 tcp 연결방식임. socket으로 완전 연결시도/동진님은 syn scan방식
 # 일단 통합시켜보기
 def scan_ftp_ssh_port(host,port):
     if port == 21:
@@ -347,7 +342,7 @@ def scan_ftp_ssh_port(host,port):
     else:
         service_name = '알 수 없는 서비스'
         
-    response_data = {'service':service_name,'port': port, 'status': 'closed', 'banner': None, 'error_message': None}
+    response_data = {'service':service_name,'port': port, 'status': 'closed'}
 
     try:
         # FTP 서버에 연결 시도
@@ -378,9 +373,7 @@ def scan_ftp_ssh_port(host,port):
 def scan_http_port(target_host, port):
     response_data = {
         'port': port,
-        'status': None,
-        'banner': None,
-        'error_message': None
+        'status': 'closed',
     }
 
     try:
@@ -407,7 +400,7 @@ def scan_http_port(target_host, port):
 
 #다솜님 110
 def scan_pop3_port(target_host, port):
-    response_data = {'service':'POP3','port': port, 'status': 'closed', 'banner': None, 'error_message': None}
+    response_data = {'service':'POP3','port': port, 'status': 'closed'}
     try:
         sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
         sock.settimeout(3)

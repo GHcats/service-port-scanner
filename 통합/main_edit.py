@@ -5,6 +5,7 @@ import concurrent.futures
 import time
 from scan_edit import *
 
+
 def scan_all(host):
     # 각 스캔 작업을 함수와 연관 메타데이터(포트 번호)와 함께 정의    
     scan_tasks = [
