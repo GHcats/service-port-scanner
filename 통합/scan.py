@@ -1,6 +1,4 @@
-# servicename + tcp, udp도 출력하도록 수정하기
-# 함수 이름 통합
-# 443포트도 추가하기
+# scan_edit에서 수정중
 
 import socket
 import struct

@@ -1,7 +1,4 @@
-# 포트 오픈 여부 판단하도록 수정
-# 3초 걸림
-# 몇개 열렸는지 보여주고, 열려있는 포트의 배너정보를 출력함
-# 지금은 모든 정보를 출력함
+# main_edit에서 수정중
 
 import concurrent.futures
 import time
