@@ -372,20 +372,18 @@ def scan_ftp_ssh_port(host,port):
         
     return response_data
 
-
 #다솜님 80
 def scan_http_port(target_host, port):
-    response_data = {'service':'HTTP','port': port, 'status': 'closed', 'banner': None, 'error_message': None}
+    response_data = {
+        'port': port,
+        'status': None,
+        'banner': None,
+        'error_message': None
+    }
 
     try:
-        sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-        sock.settimeout(5) 
-        result = sock.connect_ex((target_host, port))
-
-        if result == 0:
-            response_data['status'] = 'open' 
-            http_request = b"HEAD / HTTP/1.1\r\nHost: " + target_host.encode() + b"\r\n\r\n"
-            sock.send(http_request)
+        with socket.create_connection((target_host, port), timeout=5) as sock:
+            sock.sendall(b"HEAD / HTTP/1.1\r\nHost: " + target_host.encode() + b"\r\n\r\n")
             response = b""
             while b"\r\n\r\n" not in response:
                 chunk = sock.recv(1024)
@@ -394,15 +392,14 @@ def scan_http_port(target_host, port):
                 response += chunk
 
             banner = response.decode("utf-8").strip()
+            response_data['status'] = 'open'
             response_data['banner'] = banner
-        else:
-            response_data['status'] = 'closed' 
-    except Exception as e:
+    except socket.timeout:
+        response_data['status'] = 'timeout'
+        response_data['error_message'] = 'Connection timed out'
+    except socket.error as e:
         response_data['status'] = 'error'
         response_data['error_message'] = str(e)
-    finally:
-        if sock:
-            sock.close()
 
     return response_data
 
