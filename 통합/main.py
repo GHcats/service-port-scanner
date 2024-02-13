@@ -29,7 +29,8 @@ def scan_all(host):
     (scan_vmware_soap_port, {'port': 902}),
     (scan_imap_port, {'port': 993}),
     (scan_mysql_port, {'port': 3306}),
-    (scan_rdp_port, {'port': 3389})
+    (scan_rdp_port, {'port': 3389}),
+    (scan_rsync_port, {'port': 135})
 ]
 
 

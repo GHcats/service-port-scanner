@@ -426,4 +426,31 @@ def scan_rdp_port(ip, port=3389):
         response_data['state'] = 'closed or filtered'
     return response_data
 
+import socket
+
+# 135
+def scan_rsync_port(ip, port):
+    response_data = {
+        'port': port,
+        'state': None,
+        'banner': None,
+        'error_message': None
+    }
+    try:
+        socket.setdefaulttimeout(3)
+        s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+        s.connect((ip, port))
+        response = s.recv(1024).decode('utf-8').strip()
+        response_data['state'] = 'open'
+        response_data['banner'] = response
+    except socket.timeout:
+        response_data['state'] = 'closed'
+    except Exception as e:
+        response_data['state'] = 'error'
+        response_data['error_message'] = str(e)
+    finally:
+        s.close() if 's' in locals() else None
+
+    return response_data
+
     
