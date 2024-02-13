@@ -433,7 +433,4 @@ def scan_rdp_port(ip, port=3389):
         response_data['state'] = 'closed or filtered'
     return response_data
 
-import socket
-
-
     
