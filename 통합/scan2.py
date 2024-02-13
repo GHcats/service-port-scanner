@@ -1,4 +1,5 @@
-# python 3.9
+# python3.7
+
 import socket
 import struct
 import time
@@ -242,12 +243,14 @@ def scan_mysql_port(host, port, timeout=1):
 
 def scan_imap_port(host, port, timeout = 5):    
     response_data = {'service':'IMAP','port': port, 'state': 'closed'}
+    original_timeout = socket.getdefaulttimeout()
+    socket.setdefaulttimeout(timeout)
     
     try:
         if port == 993:
-            imap_server = imaplib.IMAP4_SSL(host,port, timeout=timeout)
+            imap_server = imaplib.IMAP4_SSL(host,port)
         else:
-            imap_server = imaplib.IMAP4(host,port, timeout=timeout)
+            imap_server = imaplib.IMAP4(host,port)
         # 배너정보 가져오기
         banner_info = imap_server.welcome
         response_data['state'] = 'open'
@@ -261,6 +264,8 @@ def scan_imap_port(host, port, timeout = 5):
     except Exception as e:
         response_data['state'] = 'error'
         response_data['error'] = str(e)
+    finally:
+        socket.setdefaulttimeout(original_timeout)
         
     return response_data
 

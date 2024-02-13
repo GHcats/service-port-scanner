@@ -3,7 +3,7 @@
 
 import concurrent.futures
 import time
-from scan import *
+from scan2 import *
 
 
 def scan_all(host):
@@ -15,7 +15,6 @@ def scan_all(host):
     (scan_smtp_ldap_port, {'port': 25}),
     (scan_dns_port, {'port': 53}),
     (scan_http_port, {'port': 80}),
-    (scan_pop3_port, {'port': 110}),
     (scan_ntp_port, {'port': 123}),
     (scan_imap_port, {'port': 143}),
     (scan_snmp_port, {'port': 161}),
@@ -30,13 +29,14 @@ def scan_all(host):
     (scan_imap_port, {'port': 993}),
     (scan_mysql_port, {'port': 3306}),
     (scan_rdp_port, {'port': 3389}),
-    (scan_rsync_port, {'port': 135})
+    (scan_pop3_rsync_port, {'port': 873}),
+    (scan_pop3_rsync_port, {'port': 110})
 ]
 
 
     results = []  # 결과를 저장할 리스트
     open_ports_count = 0
-    with concurrent.futures.ThreadPoolExecutor(max_workers=50) as executor:
+    with concurrent.futures.ThreadPoolExecutor(max_workers=22) as executor:
         # 각 스캔 작업에 대한 future 생성
         futures = []
         for task, metadata in scan_tasks:
