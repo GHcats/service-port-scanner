@@ -385,6 +385,7 @@ def scan_http_port(target_host, port):
 
     return response_data
 
+# 다솜님 110, 873 병합
 def scan_pop3_rsync_port(ip, port):    
     if port == 110:
         service_name = 'POP3'
@@ -413,53 +414,6 @@ def scan_pop3_rsync_port(ip, port):
         s.close() if 's' in locals() else None
 
     return response_data
-
-#다솜님 110
-# def scan_pop3_port(target_host, port):
-#     response_data = {'service':'POP3','port': port, 'state': 'closed'}
-#     try:
-#         sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-#         sock.settimeout(3)
-#         sock.connect((target_host, port))
-#         response = sock.recv(1024).decode('utf-8')
-#         response_data['state'] = 'open'
-#         response_data['banner'] = response.strip()
-#     except socket.timeout:
-#         response_data['state'] = 'no response'
-#     except Exception as e:
-#         response_data['state'] = 'error'
-#         response_data['error'] = str(e)
-#     finally:
-#         if sock:
-#             sock.close()
-
-#     return response_data
-
-
-# 135
-# def scan_rsync_port(ip, port):
-#     response_data = {
-#         'port': port,
-#         'state': None,
-#         'banner': None,
-#         'error_message': None
-#     }
-#     try:
-#         socket.setdefaulttimeout(3)
-#         s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-#         s.connect((ip, port))
-#         response = s.recv(1024).decode('utf-8').strip()
-#         response_data['state'] = 'open'
-#         response_data['banner'] = response
-#     except socket.timeout:
-#         response_data['state'] = 'closed'
-#     except Exception as e:
-#         response_data['state'] = 'error'
-#         response_data['error_message'] = str(e)
-#     finally:
-#         s.close() if 's' in locals() else None
-
-#     return response_data
 
 def scan_rdp_port(ip, port=3389):
     response_data = {'port': port, 'state': 'closed', 'error': None}
