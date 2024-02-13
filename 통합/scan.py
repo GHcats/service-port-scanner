@@ -1,4 +1,6 @@
 # python 3.9
+# IMAP, IMAPS 이름 중복 수정
+
 import socket
 import struct
 import time
@@ -241,13 +243,15 @@ def scan_mysql_port(host, port, timeout=1):
     
 
 def scan_imap_port(host, port, timeout = 5):    
-    response_data = {'service':'IMAP','port': port, 'state': 'closed'}
+    response_data = {'service':None,'port': port, 'state': 'closed'}
     
     try:
         if port == 993:
             imap_server = imaplib.IMAP4_SSL(host,port, timeout=timeout)
+            response_data['service'] = 'IMAPS'
         else:
             imap_server = imaplib.IMAP4(host,port, timeout=timeout)
+            response_data['service'] = 'IMAP'
         # 배너정보 가져오기
         banner_info = imap_server.welcome
         response_data['state'] = 'open'
