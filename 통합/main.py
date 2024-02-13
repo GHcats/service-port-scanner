@@ -1,9 +1,9 @@
-# 수정사항
-# status 가 closed 인 거는 제외하고 출력 + closed or filtered도 제외
+# open만 출력하도록 설정되어 있습니다. -> 아래 코드에서 주석해제로 변경 가능
+# scan은 파이썬 3.9 scan2는 파이썬 3.7
 
 import concurrent.futures
 import time
-from scan2 import *
+from scan import *
 
 
 def scan_all(host):
@@ -25,7 +25,7 @@ def scan_all(host):
     (scan_udp_port, {'port': 520}),
     (scan_smtp_ldap_port, {'port': 587}),
     (scan_ssl_port, {'port': 636}),
-    (scan_vmware_soap_port, {'port': 902}),
+    (scan_vmware_port, {'port': 902}),
     (scan_imap_port, {'port': 993}),
     (scan_mysql_port, {'port': 3306}),
     (scan_rdp_port, {'port': 3389}),
@@ -46,9 +46,16 @@ def scan_all(host):
         for future, metadata in futures:
             try:
                 result = future.result()
-                if 'closed' not in result.get('state', '').lower() and 'closed or filtered' not in result.get('state', '').lower():
+                state = result.get('state', '').lower()
+                # 'open'만 출력
+                if 'open' in state and not any(x in state for x in ['closed', 'error']):
                     results.append(result)
                     open_ports_count += 1
+
+                # 'closed'만 출력
+                # if 'closed' not in result.get('state', '').lower() and 'closed or filtered' not in result.get('state', '').lower():
+                #     results.append(result)
+                #     open_ports_count += 1
                 
                 # 모든 결과 출력
                 # results.append(result)
@@ -56,7 +63,7 @@ def scan_all(host):
             except Exception as e:
                 # 예외 발생 시 오류 메시지에 올바른 포트 번호를 포함
                 error_result = {'port': metadata['port'], 'state': 'error', 'error': str(e)}
-                results.append(error_result)
+                #results.append(error_result)
 
     
     # 결과를 포트 번호에 따라 정렬

@@ -1,5 +1,7 @@
-# python3.7 
-# IMAP, IMAPS 이름 중복 수정
+# python3.7 버전
+# 873추가 및 110, 873 병합
+# 자잘한 출력 메시지 수정
+# 902 vmware 함수 수정
 
 import socket
 import struct
@@ -21,7 +23,7 @@ def scan_ssl_port(ip, port):
     elif port == 636:
         service_name = "LDAPS"
     else:
-        service_name = "알 수 없는 서비스"
+        service_name = "Unknown Service"
 
     response_data = {'service':service_name, 'port': port, 'state': 'closed'}
     if syn_scan(ip, port):
@@ -46,7 +48,7 @@ def scan_smtp_ldap_port(ip, port):
     elif port == 389:
         service_name = "LDAP"
     else:
-        service_name = "알 수 없는 서비스"
+        service_name = "Unknown Service"
 
     response_data = {'service':service_name, 'port': port, 'state': 'closed'}
     
@@ -74,8 +76,7 @@ def syn_scan(ip, port):
                 return False  # 포트 닫힘
     return False  # 응답없거나 다른에러
 
-def scan_udp_port(host, port):
-    #port = 520
+def scan_udp_port(host, port=520):
     response_data = {
         'service': "UDP",
         'port': port,
@@ -97,8 +98,7 @@ def scan_udp_port(host, port):
     return response_data
 
 
-def scan_telnet_port(host, port):
-    #port = 23
+def scan_telnet_port(host, port=23):
     response_data = {'serivce': "Telnet", 'port': port, 'state': 'closed'}
     
     try:
@@ -114,7 +114,7 @@ def scan_telnet_port(host, port):
         response_data['error'] = str(e)
     return response_data
 
-def scan_dns_port(host, port):
+def scan_dns_port(host, port=53):
     response_data = {'service':'DNS', 'port': port, 'state': 'closed'}
     try:
         # UDP 소켓 생성
@@ -135,7 +135,7 @@ def scan_dns_port(host, port):
     return response_data
 
 
-def scan_ntp_port(host, port, timeout=1):
+def scan_ntp_port(host, port=123, timeout=1):
     message = '\x1b' + 47 * '\0'
     sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
     sock.settimeout(timeout)
@@ -162,62 +162,50 @@ def scan_ntp_port(host, port, timeout=1):
     }
     return response_data
 
-def scan_smb_port(host, port, timeout=1):
+def scan_smb_port(host, port=445, timeout=1):
     response_data = {}
-    connection = Connection(uuid.uuid4(), host, 445)
+    connection = Connection(uuid.uuid4(), host, port)
     connection.connect(timeout=timeout)
     response_data = {
         'service': 'SMB',
-        'port': 445,
+        'port': port,
         'state': 'open',
         'negotiated_dialect': connection.dialect
     }
     connection.disconnect()
     return response_data
 
-def scan_vmware_soap_port(host, port, timeout=1):
-    response_data = {'service':'VMWARE_SOAP', 'port': port, 'state': 'closed'} 
+def scan_vmware_port(host, port=902, timeout=1):
+    response_data = {'service': 'VMWARE', 'port': port, 'state': 'closed'}
 
     try:
         sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
         sock.settimeout(timeout)
         sock.connect((host, port))
 
-        soap_request = f"""POST /sdk HTTP/1.1\r
-                            Host: {host}:{port}\r
-                            Content-Type: text/xml; charset=utf-8\r
-                            Content-Length: {{length}}\r
-                            SOAPAction: "urn:internalvim25/5.5"\r
-                            \r
-                            <?xml version="1.0" encoding="utf-8"?>
-                            <soapenv:Envelope xmlns:soapenv="http://schemas.xmlsoap.org/soap/envelope/" xmlns:vim25="urn:vim25">
-                            <soapenv:Header/>
-                            <soapenv:Body>
-                                <vim25:RetrieveServiceContent>
-                                <vim25:_this type="ServiceInstance">ServiceInstance</vim25:_this>
-                                </vim25:RetrieveServiceContent>
-                            </soapenv:Body>
-                            </soapenv:Envelope>"""
-
-        body = soap_request.format(length=len(soap_request) - 2)
-        sock.sendall(body.encode('utf-8'))
-
-        response = sock.recv(4096)
+        response = sock.recv(1024)
         sock.close()
 
         if response:
             response_data['state'] = 'open'
-            response_data['response'] = response.decode('utf-8', errors='ignore')
+            try:
+                response_data['banner'] = response.decode('utf-8').strip()
+            except UnicodeDecodeError:
+                response_data['banner'] = response.hex()
         else:
-            response_data['state'] = 'no response'
+            response_data['state'] = 'closed' #원래는 no responce
 
     except socket.error as e:
         response_data['state'] = 'error'
-        response_data['error'] = str(e)
+        response_data['error_message'] = str(e)
+
+    finally:
+        if sock:
+            sock.close()
 
     return response_data
 
-def scan_mysql_port(host, port, timeout=1):
+def scan_mysql_port(host, port=3306, timeout=1):
     s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
     s.settimeout(timeout)
     s.connect((host, port))
@@ -251,19 +239,21 @@ def scan_imap_port(host, port, timeout = 5):
         if port == 993:
             imap_server = imaplib.IMAP4_SSL(host,port)
             response_data['service'] = 'IMAPS'
-        else:
+        elif port == 143:
             imap_server = imaplib.IMAP4(host,port)
             response_data['service'] = 'IMAP'
+        else:
+            response_data['service'] = 'Unknown Service'
         
         # 배너정보 가져오기
         banner_info = imap_server.welcome
         response_data['state'] = 'open'
-        response_data['banner'] = banner_info
+        response_data['banner'] = str(banner_info)
         imap_server.logout()
         
     except imaplib.IMAP4.error as imap_error:
         response_data['state'] = 'error'
-        response_data['error'] = imap_error
+        response_data['error'] = str(imap_error)
         
     except Exception as e:
         response_data['state'] = 'error'
@@ -275,7 +265,7 @@ def scan_imap_port(host, port, timeout = 5):
     return response_data
 
 #승희님 161    
-def scan_snmp_port(host, port):
+def scan_snmp_port(host, port=161):
     community = 'public'
     response_data = {'service':'SNMP', 'port': port, 'state': 'closed'}
 
@@ -332,7 +322,7 @@ def scan_ftp_ssh_port(host,port):
     elif port == 22:
         service_name = 'SSH'
     else:
-        service_name = '알 수 없는 서비스'
+        service_name = 'Unknown Service'
         
     response_data = {'service':service_name,'port': port, 'state': 'closed'}
 
@@ -362,11 +352,8 @@ def scan_ftp_ssh_port(host,port):
     return response_data
 
 #다솜님 80
-def scan_http_port(target_host, port):
-    response_data = {
-        'port': port,
-        'state': 'closed',
-    }
+def scan_http_port(target_host, port=80):
+    response_data = {'port': port, 'state': 'closed'}
 
     try:
         with socket.create_connection((target_host, port), timeout=5) as sock:
@@ -394,11 +381,10 @@ def scan_http_port(target_host, port):
 def scan_pop3_rsync_port(ip, port):    
     if port == 110:
         service_name = 'POP3'
-    
     elif port == 873:
         service_name = 'RSYNC'
     else:
-        service_name = '알 수 없는 서비스'
+        service_name = 'Unknown Service'
         
     response_data = {'service': service_name, 'port': port, 'state':'closed'}
         
@@ -438,8 +424,3 @@ def scan_rdp_port(ip, port=3389):
     else:
         response_data['state'] = 'closed or filtered'
     return response_data
-
-import socket
-
-
-    
