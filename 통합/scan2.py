@@ -243,7 +243,6 @@ def scan_mysql_port(host, port, timeout=1):
     
 
 def scan_imap_port(host, port, timeout = 5):    
-    host = "outlook.office365.com"
     response_data = {'service':None,'port': port, 'state': 'closed'}
     original_timeout = socket.getdefaulttimeout()
     socket.setdefaulttimeout(timeout)
